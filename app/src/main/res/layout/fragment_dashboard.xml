@@ -4,19 +4,35 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.dashboard.DashboardFragment">
+    tools:context=".ui.dashboard.DashboardFragment"
+    android:padding="16dp">
 
     <TextView
-        android:id="@+id/text_dashboard"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/label"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/rv"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/edit"
+        android:textSize="24sp"
+        android:padding="16dp"
+        android:text="Floors"
+        android:gravity="center"/>
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/edit"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/label"
+        app:layout_constraintStart_toEndOf="@id/label"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:background="@drawable/ic_edit_black_24dp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:textAlignment="center"
-        android:textSize="20sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:id="@+id/rv"
+        app:layout_constraintTop_toBottomOf="@id/label"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
