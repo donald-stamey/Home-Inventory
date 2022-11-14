@@ -40,14 +40,17 @@ class DashboardFragment : Fragment() {
             requireContext(), RoomDB.Inventory::class.java, "inventory")
             .allowMainThreadQueries().build()
         val floorDao = db.floorDao()
+        Thread(Runnable {
+            db.clearAllTables()
+        })
         //.insertFloor(RoomDB.Floor(0,"test1"))
         //floorDao.insertFloor(RoomDB.Floor(0,"test2"))
         //floorDao.insertFloor(RoomDB.Floor(0,"test3"))
         //floorDao.insertFloor(RoomDB.Floor(0,"test4"))
-        binding.rv.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-        val adapter = InvListAdapter(floorDao.getFloors())
-        binding.rv.adapter = adapter
-        binding.label.text = adapter.itemCount.toString()
+        //binding.rv.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+        //val adapter = InvListAdapter(floorDao.getFloors())
+        //binding.rv.adapter = adapter
+        //binding.label.text = adapter.itemCount.toString()
     }
 
     fun Test(){}

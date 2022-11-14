@@ -6,21 +6,21 @@ class RoomDB {
     @Entity(tableName = "floors")
     data class Floor(
         @PrimaryKey(autoGenerate = true) val id: Int,
-        @ColumnInfo(name = "name") val name: String
-    )
+        @ColumnInfo(name = "name") val name: String,
+    ){override fun toString(): String = name}
     @Entity(tableName = "rooms")
     data class Room(
         @PrimaryKey val id: Int,
         @ColumnInfo(name = "name") val name: String,
         @ColumnInfo(name = "floor_id") val floor_id: Int
-    )
+    ){override fun toString(): String = name}
     @Entity(tableName = "surfaces")
     data class Surface(
         @PrimaryKey val id: Int,
         @ColumnInfo(name = "name") val name: String,
         @ColumnInfo(name = "floor_id") val floor_id: Int,
         @ColumnInfo(name = "room_id") val room_id: Int
-    )
+    ){override fun toString(): String = name}
     @Entity(tableName = "containers")
     data class Container(
         @PrimaryKey val id: Int,
@@ -28,7 +28,7 @@ class RoomDB {
         @ColumnInfo(name = "floor_id") val floor_id: Int,
         @ColumnInfo(name = "room_id") val room_id: Int,
         @ColumnInfo(name = "surface_id") val surface_id: Int
-    )
+    ){override fun toString(): String = name}
     @Entity(tableName = "items")
     data class Item(
         @PrimaryKey val id: Int,
@@ -39,7 +39,7 @@ class RoomDB {
         @ColumnInfo(name = "container_id") val container_id: Int,
         @ColumnInfo val image: String?,
         @ColumnInfo val category: String?
-    )
+    ){override fun toString(): String = name}
 
     data class FloorWithRooms(
         @Embedded val floor: Floor,
@@ -133,6 +133,9 @@ class RoomDB {
 
     @Dao
     interface RoomDao{
+        @Insert
+        fun insertRoom(room: Room)
+
         @Query("SELECT * FROM rooms")
         fun getRooms(): List<Room>
 
@@ -142,6 +145,9 @@ class RoomDB {
 
     @Dao
     interface SurfaceDao{
+        @Insert
+        fun insertSurface(surface: Surface)
+
         @Query("SELECT * FROM surfaces")
         fun getSurfaces(): List<Surface>
 
@@ -154,6 +160,9 @@ class RoomDB {
 
     @Dao
     interface ContainerDao{
+        @Insert
+        fun insertContainer(container: Container)
+
         @Query("SELECT * FROM containers")
         fun getContainers(): List<Container>
 
@@ -169,6 +178,9 @@ class RoomDB {
 
     @Dao
     interface ItemDao{
+        @Insert
+        fun insertItem(item: Item)
+
         @Query("SELECT * FROM items")
         fun getItems(): List<Item>
 
@@ -181,8 +193,8 @@ class RoomDB {
         @Query("SELECT * FROM items WHERE surface_id=:surface_id")
         fun getItemsOnSurface(surface_id: Int): List<Item>
 
-        @Query("SELECT * FROM items WHERE container_id=:container_id")
-        fun getItemsInContainer(container_id: Int): List<Item>
+        @Query("SELECT * FROM items WHERE container_id=:container_id LIKE :search")
+        fun getItemsInContainer(container_id: Int, search: String?): List<Item>
     }
 
     @Database(entities = [Floor::class, Room::class, Surface::class, Container::class, Item::class], version = 1)
@@ -190,7 +202,7 @@ class RoomDB {
         abstract fun floorDao(): FloorDao
         abstract fun roomDao(): RoomDao
         abstract fun surfaceDao(): SurfaceDao
-        abstract fun ContainerDao(): ContainerDao
+        abstract fun containerDao(): ContainerDao
         abstract fun itemDao(): ItemDao
     }
 }
