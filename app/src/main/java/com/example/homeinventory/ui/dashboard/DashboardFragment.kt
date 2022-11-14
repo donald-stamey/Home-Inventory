@@ -4,9 +4,15 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ListAdapter
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.room.Room
+import com.example.homeinventory.InvListAdapter
+import com.example.homeinventory.RoomDB
 import com.example.homeinventory.databinding.FragmentDashboardBinding
 
 class DashboardFragment : Fragment() {
@@ -26,14 +32,25 @@ class DashboardFragment : Fragment() {
             ViewModelProvider(this).get(DashboardViewModel::class.java)
 
         _binding = FragmentDashboardBinding.inflate(inflater, container, false)
-        val root: View = binding.root
-
-        val textView: TextView = binding.textDashboard
-        dashboardViewModel.text.observe(viewLifecycleOwner) {
-            textView.text = it
-        }
-        return root
+        return binding.root
     }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val db = Room.databaseBuilder(
+            requireContext(), RoomDB.Inventory::class.java, "inventory")
+            .allowMainThreadQueries().build()
+        val floorDao = db.floorDao()
+        //.insertFloor(RoomDB.Floor(0,"test1"))
+        //floorDao.insertFloor(RoomDB.Floor(0,"test2"))
+        //floorDao.insertFloor(RoomDB.Floor(0,"test3"))
+        //floorDao.insertFloor(RoomDB.Floor(0,"test4"))
+        binding.rv.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+        val adapter = InvListAdapter(floorDao.getFloors())
+        binding.rv.adapter = adapter
+        binding.label.text = adapter.itemCount.toString()
+    }
+
+    fun Test(){}
 
     override fun onDestroyView() {
         super.onDestroyView()

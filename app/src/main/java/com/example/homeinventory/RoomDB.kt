@@ -5,7 +5,7 @@ import androidx.room.*
 class RoomDB {
     @Entity(tableName = "floors")
     data class Floor(
-        @PrimaryKey val id: Int,
+        @PrimaryKey(autoGenerate = true) val id: Int,
         @ColumnInfo(name = "name") val name: String
     )
     @Entity(tableName = "rooms")
@@ -124,6 +124,9 @@ class RoomDB {
 
     @Dao
     interface FloorDao{
+        @Insert
+        fun insertFloor(floor: Floor)
+
         @Query("SELECT * FROM floors")
         fun getFloors(): List<Floor>
     }
