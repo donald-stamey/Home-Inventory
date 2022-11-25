@@ -48,7 +48,7 @@ class NotificationsFragment : Fragment() {
         listFloors()
         binding.searchButton.setOnClickListener {
             val itemDao = db.itemDao()
-            val items = itemDao.getItemsInContainer(container, binding.search.text.toString())
+            val items = itemDao.getItemsInContainer(container, "%" + binding.search.text.toString() + "%")
             binding.results.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
             val adapter = ResultsAdapter(items)
             binding.results.adapter = adapter
@@ -57,7 +57,7 @@ class NotificationsFragment : Fragment() {
 
     fun listFloors() {
         val floorDao = db.floorDao()
-        val floors = floorDao.getFloors()
+        val floors = floorDao.getAll()
         val floorSpinAdapt = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, floors)
         floorSpinAdapt.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.floorSpin.adapter = floorSpinAdapt
