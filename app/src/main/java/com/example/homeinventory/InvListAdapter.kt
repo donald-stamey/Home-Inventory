@@ -9,7 +9,7 @@ class InvListAdapter(private val daoList: List<RoomDB.InvDao>) :
     RecyclerView.Adapter<InvListAdapter.ViewHolder>() {
     private var daoIndex = 0
     private var list = daoList[daoIndex].getAll()
-    private var id = -1
+    private var curInvObject = list[0]
     inner class ViewHolder(val rowBinding: InvRowBinding) : RecyclerView.ViewHolder(rowBinding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -24,20 +24,27 @@ class InvListAdapter(private val daoList: List<RoomDB.InvDao>) :
         binding.id.text = list[position].id.toString()
         binding.root.setOnClickListener {
             if(daoIndex < daoList.size - 1) {
+                curInvObject = list[position]
+                list = daoList[daoIndex].downList(curInvObject.id)
                 daoIndex++
-                list = daoList[daoIndex].getAll()
-                id = list[position].id
                 notifyDataSetChanged()
+            } else {
+                //open item page
             }
         }
     }
 
     fun up() {
-        if(daoIndex > 0) {
-            id = daoList[daoIndex].up(id).id
+        if(daoIndex > 1) {
             daoIndex--
-            list = daoList[daoIndex].downList(id)
+            curInvObject = daoList[daoIndex].up(curInvObject)
+            list = daoList[daoIndex - 1].downList(curInvObject.id)
+        } else {
+            daoIndex = 0
+            list = daoList[daoIndex].getAll()
+            curInvObject = list[0]
         }
+        notifyDataSetChanged()
     }
 
     override fun getItemCount(): Int {

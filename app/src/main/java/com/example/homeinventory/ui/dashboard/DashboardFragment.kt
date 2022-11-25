@@ -36,10 +36,14 @@ class DashboardFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         db = Room.databaseBuilder(
             requireContext(), RoomDB.Inventory::class.java, "inventory")
-            .allowMainThreadQueries().build()
+            .allowMainThreadQueries().fallbackToDestructiveMigration().build()
         binding.rv.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-        binding.rv.adapter = InvListAdapter(listOf<RoomDB.InvDao>(
+        val adapter = InvListAdapter(listOf<RoomDB.InvDao>(
             db.floorDao(), db.roomDao(), db.surfaceDao(), db.containerDao(), db.itemDao()))
+        binding.rv.adapter = adapter
+        binding.back.setOnClickListener {
+            adapter.up()
+        }
     }
 
     fun addTest() {
