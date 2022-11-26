@@ -51,7 +51,7 @@ class DashboardFragment : Fragment() {
         binding.back.setOnClickListener {
             adapter.up()
             labelBinding.isEnabled = false
-            it.background = getDrawable(requireContext(), R.drawable.ic_edit_black_24dp)
+            binding.edit.background = getDrawable(requireContext(), R.drawable.ic_edit_black_24dp)
         }
         labelBinding.setHintTextColor(Color.BLACK)
         labelBinding.isEnabled = false

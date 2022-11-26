@@ -84,9 +84,6 @@ class RoomDB {
         fun getAllHelp(): List<Room>
         override fun getAll(): List<InvObject> = getAllHelp()
 
-        @Query("SELECT * FROM rooms WHERE floor_id=:floor_id")
-        fun getRoomsOnFloor(floor_id: Int): List<Room>
-
         @Query("SELECT * FROM floors WHERE id=:floor_id")
         fun upHelp(floor_id: Int): Floor
         override fun up(invObject: InvObject) = upHelp((invObject as Room).floor_id)
@@ -108,12 +105,6 @@ class RoomDB {
         @Query("SELECT * FROM surfaces")
         fun getAllHelp(): List<Surface>
         override fun getAll(): List<InvObject> = getAllHelp()
-
-        @Query("SELECT * FROM surfaces WHERE floor_id=:floor_id")
-        fun getSurfacesOnFloor(floor_id: Int): List<Surface>
-
-        @Query("SELECT * FROM surfaces WHERE room_id=:room_id")
-        fun getSurfacesInRoom(room_id: Int): List<Surface>
 
         @Query("SELECT * FROM rooms WHERE id=:room_id")
         fun upHelp(room_id: Int): Room
@@ -137,15 +128,6 @@ class RoomDB {
         fun getAllHelp(): List<Container>
         override fun getAll(): List<InvObject> = getAllHelp()
 
-        @Query("SELECT * FROM containers WHERE floor_id=:floor_id")
-        fun getContainersOnFloor(floor_id: Int): List<Container>
-
-        @Query("SELECT * FROM containers WHERE room_id=:room_id")
-        fun getContainersInRoom(room_id: Int): List<Container>
-
-        @Query("SELECT * FROM containers WHERE surface_id=:surface_id")
-        fun getContainersOnSurface(surface_id: Int): List<Container>
-
         @Query("SELECT * FROM surfaces WHERE id=:surface_id")
         fun upHelp(surface_id: Int): Surface
         override fun up(invObject: InvObject) = upHelp((invObject as Container).surface_id)
@@ -168,14 +150,17 @@ class RoomDB {
         fun getAllHelp(): List<Item>
         override fun getAll(): List<InvObject> = getAllHelp()
 
-        @Query("SELECT * FROM items WHERE floor_id=:floor_id")
-        fun getItemsOnFloor(floor_id: Int): List<Item>
+        @Query("SELECT * FROM items WHERE name LIKE :search")
+        fun getSearch(search: String): List<Item>
 
-        @Query("SELECT * FROM items WHERE room_id=:room_id")
-        fun getItemsInRoom(room_id: Int): List<Item>
+        @Query("SELECT * FROM items WHERE floor_id=:floor_id AND name LIKE :search")
+        fun getItemsOnFloor(floor_id: Int, search: String): List<Item>
 
-        @Query("SELECT * FROM items WHERE surface_id=:surface_id")
-        fun getItemsOnSurface(surface_id: Int): List<Item>
+        @Query("SELECT * FROM items WHERE room_id=:room_id AND name LIKE :search")
+        fun getItemsInRoom(room_id: Int, search: String): List<Item>
+
+        @Query("SELECT * FROM items WHERE surface_id=:surface_id AND name LIKE :search")
+        fun getItemsOnSurface(surface_id: Int, search: String): List<Item>
 
         @Query("SELECT * FROM items WHERE container_id=:container_id AND name LIKE :search")
         fun getItemsInContainer(container_id: Int, search: String): List<Item>
