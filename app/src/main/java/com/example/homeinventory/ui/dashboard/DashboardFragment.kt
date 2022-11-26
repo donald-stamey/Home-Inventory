@@ -1,14 +1,20 @@
 package com.example.homeinventory.ui.dashboard
 
+import android.annotation.SuppressLint
+import android.graphics.Color
 import android.os.Bundle
+import android.text.Editable
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat.getDrawable
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.room.Room
 import com.example.homeinventory.InvListAdapter
+import com.example.homeinventory.R
 import com.example.homeinventory.RoomDB
 import com.example.homeinventory.databinding.FragmentDashboardBinding
 
@@ -38,11 +44,26 @@ class DashboardFragment : Fragment() {
             requireContext(), RoomDB.Inventory::class.java, "inventory")
             .allowMainThreadQueries().fallbackToDestructiveMigration().build()
         binding.rv.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-        val adapter = InvListAdapter(listOf<RoomDB.InvDao>(
+        val labelBinding = binding.label
+        val adapter = InvListAdapter(labelBinding, listOf<RoomDB.InvDao>(
             db.floorDao(), db.roomDao(), db.surfaceDao(), db.containerDao(), db.itemDao()))
         binding.rv.adapter = adapter
         binding.back.setOnClickListener {
             adapter.up()
+            labelBinding.isEnabled = false
+            it.background = getDrawable(requireContext(), R.drawable.ic_edit_black_24dp)
+        }
+        labelBinding.setHintTextColor(Color.BLACK)
+        labelBinding.isEnabled = false
+        binding.edit.setOnClickListener {
+            if(labelBinding.isEnabled) {
+                labelBinding.isEnabled = false
+                adapter.changeName(labelBinding.text.toString())
+                it.background = getDrawable(requireContext(), R.drawable.ic_edit_black_24dp)
+            } else {
+                labelBinding.isEnabled = true
+                it.background = getDrawable(requireContext(), R.drawable.ic_check_black_24dp)
+            }
         }
     }
 

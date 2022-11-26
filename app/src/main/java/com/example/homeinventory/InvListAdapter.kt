@@ -2,10 +2,11 @@ package com.example.homeinventory
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.EditText
 import androidx.recyclerview.widget.RecyclerView
 import com.example.homeinventory.databinding.InvRowBinding
 
-class InvListAdapter(private val daoList: List<RoomDB.InvDao>) :
+class InvListAdapter(private val label: EditText, private val daoList: List<RoomDB.InvDao>) :
     RecyclerView.Adapter<InvListAdapter.ViewHolder>() {
     private var daoIndex = 0
     private var list = daoList[daoIndex].getAll()
@@ -25,6 +26,7 @@ class InvListAdapter(private val daoList: List<RoomDB.InvDao>) :
         binding.root.setOnClickListener {
             if(daoIndex < daoList.size - 1) {
                 curInvObject = list[position]
+                label.setText(curInvObject.name)
                 list = daoList[daoIndex].downList(curInvObject.id)
                 daoIndex++
                 notifyDataSetChanged()
@@ -38,13 +40,20 @@ class InvListAdapter(private val daoList: List<RoomDB.InvDao>) :
         if(daoIndex > 1) {
             daoIndex--
             curInvObject = daoList[daoIndex].up(curInvObject)
+            label.setText(curInvObject.name)
             list = daoList[daoIndex - 1].downList(curInvObject.id)
         } else {
             daoIndex = 0
             list = daoList[daoIndex].getAll()
             curInvObject = list[0]
+            label.setText("Floors")
         }
         notifyDataSetChanged()
+    }
+
+    fun changeName(newName: String) {
+        curInvObject.name = newName
+        daoList[daoIndex - 1].changeName(curInvObject)
     }
 
     override fun getItemCount(): Int {

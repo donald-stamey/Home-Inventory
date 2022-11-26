@@ -5,30 +5,30 @@ import androidx.room.*
 class RoomDB {
     interface InvObject{
         val id: Int
-        val name: String
+        var name: String
     }
     @Entity(tableName = "floors")
     data class Floor(
         @PrimaryKey(autoGenerate = true) override val id: Int,
-        @ColumnInfo(name = "name") override val name: String,
+        @ColumnInfo(name = "name") override var name: String,
     ): InvObject{override fun toString(): String = name}
     @Entity(tableName = "rooms")
     data class Room(
         @PrimaryKey(autoGenerate = true) override val id: Int,
-        @ColumnInfo(name = "name") override val name: String,
+        @ColumnInfo(name = "name") override var name: String,
         @ColumnInfo(name = "floor_id") val floor_id: Int
     ): InvObject{override fun toString(): String = name}
     @Entity(tableName = "surfaces")
     data class Surface(
         @PrimaryKey(autoGenerate = true) override val id: Int,
-        @ColumnInfo(name = "name") override val name: String,
+        @ColumnInfo(name = "name") override var name: String,
         @ColumnInfo(name = "floor_id") val floor_id: Int,
         @ColumnInfo(name = "room_id") val room_id: Int
     ): InvObject{override fun toString(): String = name}
     @Entity(tableName = "containers")
     data class Container(
         @PrimaryKey(autoGenerate = true) override val id: Int,
-        @ColumnInfo(name = "name") override val name: String,
+        @ColumnInfo(name = "name") override var name: String,
         @ColumnInfo(name = "floor_id") val floor_id: Int,
         @ColumnInfo(name = "room_id") val room_id: Int,
         @ColumnInfo(name = "surface_id") val surface_id: Int
@@ -36,7 +36,7 @@ class RoomDB {
     @Entity(tableName = "items")
     data class Item(
         @PrimaryKey(autoGenerate = true) override val id: Int,
-        @ColumnInfo(name = "name") override val name: String,
+        @ColumnInfo(name = "name") override var name: String,
         @ColumnInfo(name = "floor_id") val floor_id: Int,
         @ColumnInfo(name = "room_id") val room_id: Int,
         @ColumnInfo(name = "surface_id") val surface_id: Int,
@@ -49,6 +49,7 @@ class RoomDB {
         fun getAll(): List<InvObject>
         fun up(invObject: InvObject): InvObject
         fun downList(id: Int): List<InvObject>
+        fun changeName(invObject: InvObject)
     }
 
     @Dao
@@ -68,6 +69,10 @@ class RoomDB {
         @Query("SELECT * FROM rooms WHERE floor_id=:id")
         fun downHelp(id: Int): List<Room>
         override fun downList(id: Int): List<InvObject> = downHelp(id)
+
+        @Update()
+        fun changeNameHelp(floor: Floor)
+        override fun changeName(invObject: InvObject) = changeNameHelp(invObject as Floor)
     }
 
     @Dao
@@ -89,6 +94,10 @@ class RoomDB {
         @Query("SELECT * FROM surfaces WHERE room_id=:id")
         fun downHelp(id: Int): List<Surface>
         override fun downList(id: Int): List<InvObject> = downHelp(id)
+
+        @Update()
+        fun changeNameHelp(room: Room)
+        override fun changeName(invObject: InvObject) = changeNameHelp(invObject as Room)
     }
 
     @Dao
@@ -113,6 +122,10 @@ class RoomDB {
         @Query("SELECT * FROM containers WHERE surface_id=:id")
         fun downHelp(id: Int): List<Container>
         override fun downList(id: Int): List<InvObject> = downHelp(id)
+
+        @Update()
+        fun changeNameHelp(surface: Surface)
+        override fun changeName(invObject: InvObject) = changeNameHelp(invObject as Surface)
     }
 
     @Dao
@@ -140,6 +153,10 @@ class RoomDB {
         @Query("SELECT * FROM items WHERE container_id=:id")
         fun downHelp(id: Int): List<Item>
         override fun downList(id: Int): List<InvObject> = downHelp(id)
+
+        @Update()
+        fun changeNameHelp(container: Container)
+        override fun changeName(invObject: InvObject) = changeNameHelp(invObject as Container)
     }
 
     @Dao
@@ -171,6 +188,10 @@ class RoomDB {
         @Query("SELECT * FROM items WHERE container_id=:id")
         fun downHelp(id: Int): List<Item>
         override fun downList(id: Int): List<InvObject> = downHelp(id)
+
+        @Update()
+        fun changeNameHelp(item: Item)
+        override fun changeName(invObject: InvObject) = changeNameHelp(invObject as Item)
     }
 
     @Database(entities = [Floor::class, Room::class, Surface::class, Container::class, Item::class], version = 2)
