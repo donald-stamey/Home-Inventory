@@ -6,11 +6,9 @@ import android.widget.EditText
 import androidx.recyclerview.widget.RecyclerView
 import com.example.homeinventory.databinding.InvRowBinding
 
-class InvListAdapter(private val label: EditText, private val daoList: List<RoomDB.InvDao>) :
+class InvListAdapter(private val invClick: (invObject: RoomDB.InvObject) -> Unit) :
     RecyclerView.Adapter<InvListAdapter.ViewHolder>() {
-    private var daoIndex = 0
-    private var list = daoList[daoIndex].getAll()
-    private var curInvObject = list[0]
+    private var list = emptyList<RoomDB.InvObject>()
     inner class ViewHolder(val rowBinding: InvRowBinding) : RecyclerView.ViewHolder(rowBinding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -24,36 +22,13 @@ class InvListAdapter(private val label: EditText, private val daoList: List<Room
         binding.name.text = list[position].name
         binding.id.text = list[position].id.toString()
         binding.root.setOnClickListener {
-            if(daoIndex < daoList.size - 1) {
-                curInvObject = list[position]
-                label.setText(curInvObject.name)
-                list = daoList[daoIndex].downList(curInvObject.id)
-                daoIndex++
-                notifyDataSetChanged()
-            } else {
-                //open item page
-            }
+            invClick(list[position])
         }
     }
 
-    fun up() {
-        if(daoIndex > 1) {
-            daoIndex--
-            curInvObject = daoList[daoIndex].up(curInvObject)
-            label.setText(curInvObject.name)
-            list = daoList[daoIndex - 1].downList(curInvObject.id)
-        } else {
-            daoIndex = 0
-            list = daoList[daoIndex].getAll()
-            curInvObject = list[0]
-            label.setText("Floors")
-        }
+    fun submitList(newList: List<RoomDB.InvObject>) {
+        list = newList
         notifyDataSetChanged()
-    }
-
-    fun changeName(newName: String) {
-        curInvObject.name = newName
-        daoList[daoIndex - 1].changeName(curInvObject)
     }
 
     override fun getItemCount(): Int {

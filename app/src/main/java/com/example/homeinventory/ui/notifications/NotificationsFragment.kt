@@ -13,6 +13,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.room.Room
+import com.example.homeinventory.MainActivity
 import com.example.homeinventory.ResultsAdapter
 import com.example.homeinventory.RoomDB
 import com.example.homeinventory.databinding.FragmentNotificationsBinding
@@ -48,7 +49,7 @@ class NotificationsFragment : Fragment() {
         spinnerList = listOf(binding.floorSpin, binding.roomSpin, binding.surfaceSpin, binding.containerSpin)
         db = Room.databaseBuilder(
             requireContext(), RoomDB.Inventory::class.java, "inventory")
-            .allowMainThreadQueries().build()
+            .allowMainThreadQueries().fallbackToDestructiveMigration().build()
         daoList = listOf(db.floorDao(), db.roomDao(), db.surfaceDao(), db.containerDao())
         itemDao = db.itemDao()
         listOnSpinner(daoList[0].getAll(), 0)
