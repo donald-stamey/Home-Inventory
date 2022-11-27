@@ -24,6 +24,7 @@ class ResultsAdapter(private val list: List<RoomDB.Item>) :
         val binding = holder.rowBinding
         binding.name.text = list[position].name
         binding.container.text = list[position].container_id.toString()
+        binding.quantity.text = "1"
     }
 
     override fun getItemCount(): Int {
