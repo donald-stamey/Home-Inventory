@@ -7,13 +7,13 @@
     tools:context=".ui.dashboard.DashboardFragment">
 
     <ImageButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintDimensionRatio="1:1"
         android:id="@+id/back"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="@id/label"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/label"
         android:background="@drawable/ic_back_black_24dp"/>
 
     <EditText
@@ -24,26 +24,31 @@
         app:layout_constraintBottom_toTopOf="@id/rv"
         app:layout_constraintStart_toEndOf="@+id/back"
         app:layout_constraintEnd_toStartOf="@id/edit"
-        android:textSize="24sp"
+        android:maxLines="1"
+        android:inputType="text"
+        android:textSize="32sp"
         android:padding="16dp"
         android:text="Floors"
         android:gravity="center"/>
 
     <ImageButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintDimensionRatio="1:1"
         android:id="@+id/edit"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="@id/label"
-        app:layout_constraintStart_toEndOf="@id/label"
         app:layout_constraintEnd_toEndOf="parent"
         android:background="@drawable/ic_edit_black_24dp"/>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:id="@+id/rv"
-        app:layout_constraintTop_toBottomOf="@id/label"/>
+        app:layout_constraintTop_toBottomOf="@id/label"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@id/label"
+        app:layout_constraintEnd_toEndOf="@id/label"/>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:layout_width="wrap_content"

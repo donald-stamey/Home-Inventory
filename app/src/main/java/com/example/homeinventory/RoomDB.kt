@@ -47,6 +47,7 @@ class RoomDB {
 
     interface InvDao{
         fun getAll(): List<InvObject>
+        fun delete(invObject: InvObject)
         fun up(invObject: InvObject): InvObject
         fun downList(id: Int): List<InvObject>
         fun changeName(invObject: InvObject)
@@ -70,9 +71,13 @@ class RoomDB {
         fun downHelp(id: Int): List<Room>
         override fun downList(id: Int): List<InvObject> = downHelp(id)
 
-        @Update()
+        @Update
         fun changeNameHelp(floor: Floor)
         override fun changeName(invObject: InvObject) = changeNameHelp(invObject as Floor)
+
+        @Delete
+        fun deleteHelp(floor: Floor)
+        override fun delete(invObject: InvObject) = deleteHelp(invObject as Floor)
     }
 
     @Dao
@@ -92,9 +97,13 @@ class RoomDB {
         fun downHelp(id: Int): List<Surface>
         override fun downList(id: Int): List<InvObject> = downHelp(id)
 
-        @Update()
+        @Update
         fun changeNameHelp(room: Room)
         override fun changeName(invObject: InvObject) = changeNameHelp(invObject as Room)
+
+        @Delete
+        fun deleteHelp(room: Room)
+        override fun delete(invObject: InvObject) = deleteHelp(invObject as Room)
     }
 
     @Dao
@@ -114,9 +123,13 @@ class RoomDB {
         fun downHelp(id: Int): List<Container>
         override fun downList(id: Int): List<InvObject> = downHelp(id)
 
-        @Update()
+        @Update
         fun changeNameHelp(surface: Surface)
         override fun changeName(invObject: InvObject) = changeNameHelp(invObject as Surface)
+
+        @Delete
+        fun deleteHelp(surface: Surface)
+        override fun delete(invObject: InvObject) = deleteHelp(invObject as Surface)
     }
 
     @Dao
@@ -136,9 +149,13 @@ class RoomDB {
         fun downHelp(id: Int): List<Item>
         override fun downList(id: Int): List<InvObject> = downHelp(id)
 
-        @Update()
+        @Update
         fun changeNameHelp(container: Container)
         override fun changeName(invObject: InvObject) = changeNameHelp(invObject as Container)
+
+        @Delete
+        fun deleteHelp(container: Container)
+        override fun delete(invObject: InvObject) = deleteHelp(invObject as Container)
     }
 
     @Dao
@@ -174,9 +191,13 @@ class RoomDB {
         fun downHelp(id: Int): List<Item>
         override fun downList(id: Int): List<InvObject> = downHelp(id)
 
-        @Update()
+        @Update
         fun changeNameHelp(item: Item)
         override fun changeName(invObject: InvObject) = changeNameHelp(invObject as Item)
+
+        @Delete
+        fun deleteHelp(item: Item)
+        override fun delete(invObject: InvObject) = deleteHelp(invObject as Item)
     }
 
     @Database(entities = [Floor::class, Room::class, Surface::class, Container::class, Item::class], version = 2)
