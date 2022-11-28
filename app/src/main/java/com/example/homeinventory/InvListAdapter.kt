@@ -35,6 +35,10 @@ class InvListAdapter(private val invClick: (invObject: RoomDB.InvObject) -> Unit
         return removedObject
     }
 
+    fun dontDelete(index: Int) {
+        notifyItemChanged(index)
+    }
+
     override fun getItemCount(): Int {
         return list.size
     }

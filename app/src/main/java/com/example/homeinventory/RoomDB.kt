@@ -6,18 +6,22 @@ class RoomDB {
     interface InvObject{
         val id: Int
         var name: String
+        //fun copy(i: Int? = null, n: String? = null, f: Int? = null, r: Int? = null, s: Int? = null, c: Int? = null, img: String? = null, cat: String? = null): InvObject
     }
     @Entity(tableName = "floors")
     data class Floor(
         @PrimaryKey(autoGenerate = true) override val id: Int,
         @ColumnInfo(name = "name") override var name: String,
     ): InvObject{override fun toString(): String = name}
+    //fun gf(i: Int?, n: String?, f: Int?, r: Int?, s: Int?, c: Int?, img: String?, cat: String?) = Floor(i?: this.id, n?: this.name)}
+    //override fun copy(i: Int?, n: String?, f: Int?, r: Int?, s: Int?, c: Int?, img: String?, cat: String?) = this.copy(id = i?: this.id, name = n?: this.name)}
     @Entity(tableName = "rooms")
     data class Room(
         @PrimaryKey(autoGenerate = true) override val id: Int,
         @ColumnInfo(name = "name") override var name: String,
         @ColumnInfo(name = "floor_id") val floor_id: Int
     ): InvObject{override fun toString(): String = name}
+        //override fun copy(i: Int?, n: String?, f: Int?, r: Int?, s: Int?, c: Int?, img: String?, cat: String?) = this.copy(id = i?: this.id, name = n?: this.name, floor_id = f?: this.floor_id)}
     @Entity(tableName = "surfaces")
     data class Surface(
         @PrimaryKey(autoGenerate = true) override val id: Int,
@@ -50,7 +54,7 @@ class RoomDB {
         fun delete(invObject: InvObject)
         fun up(invObject: InvObject): InvObject
         fun downList(id: Int): List<InvObject>
-        fun changeName(invObject: InvObject)
+        fun update(invObject: InvObject)
     }
 
     @Dao
@@ -72,8 +76,8 @@ class RoomDB {
         override fun downList(id: Int): List<InvObject> = downHelp(id)
 
         @Update
-        fun changeNameHelp(floor: Floor)
-        override fun changeName(invObject: InvObject) = changeNameHelp(invObject as Floor)
+        fun updateHelp(floor: Floor)
+        override fun update(invObject: InvObject) = updateHelp(invObject as Floor)
 
         @Delete
         fun deleteHelp(floor: Floor)
@@ -98,8 +102,8 @@ class RoomDB {
         override fun downList(id: Int): List<InvObject> = downHelp(id)
 
         @Update
-        fun changeNameHelp(room: Room)
-        override fun changeName(invObject: InvObject) = changeNameHelp(invObject as Room)
+        fun updateHelp(room: Room)
+        override fun update(invObject: InvObject) = updateHelp(invObject as Room)
 
         @Delete
         fun deleteHelp(room: Room)
@@ -124,8 +128,8 @@ class RoomDB {
         override fun downList(id: Int): List<InvObject> = downHelp(id)
 
         @Update
-        fun changeNameHelp(surface: Surface)
-        override fun changeName(invObject: InvObject) = changeNameHelp(invObject as Surface)
+        fun updateHelp(surface: Surface)
+        override fun update(invObject: InvObject) = updateHelp(invObject as Surface)
 
         @Delete
         fun deleteHelp(surface: Surface)
@@ -150,8 +154,8 @@ class RoomDB {
         override fun downList(id: Int): List<InvObject> = downHelp(id)
 
         @Update
-        fun changeNameHelp(container: Container)
-        override fun changeName(invObject: InvObject) = changeNameHelp(invObject as Container)
+        fun updateHelp(container: Container)
+        override fun update(invObject: InvObject) = updateHelp(invObject as Container)
 
         @Delete
         fun deleteHelp(container: Container)
@@ -192,8 +196,8 @@ class RoomDB {
         override fun downList(id: Int): List<InvObject> = downHelp(id)
 
         @Update
-        fun changeNameHelp(item: Item)
-        override fun changeName(invObject: InvObject) = changeNameHelp(invObject as Item)
+        fun updateHelp(item: Item)
+        override fun update(invObject: InvObject) = updateHelp(invObject as Item)
 
         @Delete
         fun deleteHelp(item: Item)

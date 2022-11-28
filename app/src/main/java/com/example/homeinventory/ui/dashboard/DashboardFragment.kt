@@ -1,5 +1,6 @@
 package com.example.homeinventory.ui.dashboard
 
+import android.app.Activity
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
@@ -7,9 +8,11 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.widget.EditText
 import android.widget.PopupWindow
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat.getDrawable
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -21,6 +24,7 @@ import com.example.homeinventory.InvListAdapter
 import com.example.homeinventory.R
 import com.example.homeinventory.RoomDB
 import com.example.homeinventory.databinding.FragmentDashboardBinding
+import com.example.homeinventory.databinding.DeleteConfirmBinding
 import org.w3c.dom.Text
 
 class DashboardFragment : Fragment() {
@@ -59,8 +63,13 @@ class DashboardFragment : Fragment() {
         binding.edit.setOnClickListener {
             if(labelBinding.isEnabled) {
                 labelBinding.isEnabled = false
-                curInvObject.name = labelBinding.text.toString()
-                daoList[daoIndex - 1].changeName(curInvObject)
+                labelBinding.text.toString().let{newName -> curInvObject = when (daoIndex) {
+                    1 -> (curInvObject as RoomDB.Floor).copy(name = newName)
+                    2 -> (curInvObject as RoomDB.Room).copy(name = newName)
+                    3 -> (curInvObject as RoomDB.Surface).copy(name = newName)
+                    else -> (curInvObject as RoomDB.Container).copy(name = newName)
+                }}
+                daoList[daoIndex - 1].update(curInvObject)
                 it.background = getDrawable(requireContext(), R.drawable.ic_edit_black_24dp)
             } else {
                 labelBinding.isEnabled = true
@@ -77,10 +86,42 @@ class DashboardFragment : Fragment() {
         setupRV()
         adapter.submitList(daoList[daoIndex].getAll())
         labelBinding = binding.label
-        labelBinding.setHintTextColor(Color.BLACK)
         labelBinding.isEnabled = false
+        labelBinding.setTextColor(Color.BLACK)
+        labelBinding.setText("Floors")
         binding.back.visibility = View.INVISIBLE
         binding.edit.visibility = View.INVISIBLE
+    }
+
+    private fun setupRV() {
+        binding.rv.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+        binding.rv.adapter = adapter
+        ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
+            0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
+            override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder,
+                                target: RecyclerView.ViewHolder): Boolean = true
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val deleteBinding = DeleteConfirmBinding.inflate(layoutInflater)
+                val screenHeight = (requireContext() as Activity).windowManager
+                    .currentWindowMetrics.windowInsets.getInsets(WindowInsets.Type.navigationBars() or WindowInsets.Type.displayCutout())
+                val screenHeight2 = screenHeight.bottom + screenHeight.top
+                val bounds = (requireContext() as Activity).windowManager
+                    .currentWindowMetrics.bounds.height()
+                val popup = PopupWindow(deleteBinding.root, binding.root.measuredWidth, bounds - screenHeight2, true)
+                popup.showAtLocation(binding.root, Gravity.TOP, 0, 0)
+                deleteBinding.cancel.setOnClickListener {
+                    adapter.dontDelete(viewHolder.adapterPosition)
+                    popup.dismiss()
+                }
+                deleteBinding.yes.setOnClickListener {
+                    daoList[daoIndex].delete(adapter.delete(viewHolder.adapterPosition))
+                    popup.dismiss()
+                }
+                popup.setOnDismissListener {
+
+                }
+            }
+        }).attachToRecyclerView(binding.rv)
     }
 
     private fun down(invObject: RoomDB.InvObject) {
@@ -109,19 +150,6 @@ class DashboardFragment : Fragment() {
             binding.back.visibility = View.INVISIBLE
             binding.edit.visibility = View.INVISIBLE
         }
-    }
-
-    private fun setupRV() {
-        binding.rv.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-        binding.rv.adapter = adapter
-        ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
-            0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
-            override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder,
-                                target: RecyclerView.ViewHolder): Boolean = true
-            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                daoList[daoIndex].delete(adapter.delete(viewHolder.adapterPosition))
-            }
-        }).attachToRecyclerView(binding.rv)
     }
 
     override fun onDestroyView() {
