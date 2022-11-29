@@ -5,7 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.homeinventory.databinding.InvRowBinding
 
-class InvListAdapter(private val invClick: (invObject: RoomDB.InvObject) -> Unit) :
+class InvListAdapter(private val invClick: (invObject: RoomDB.InvObject, position: Int) -> Unit) :
     RecyclerView.Adapter<InvListAdapter.ViewHolder>() {
     private var list = mutableListOf<RoomDB.InvObject>()
     inner class ViewHolder(val rowBinding: InvRowBinding) : RecyclerView.ViewHolder(rowBinding.root)
@@ -20,7 +20,7 @@ class InvListAdapter(private val invClick: (invObject: RoomDB.InvObject) -> Unit
         val binding = holder.rowBinding
         binding.name.text = list[position].name
         binding.root.setOnClickListener {
-            invClick(list[position])
+            invClick(list[position], position)
         }
     }
 
@@ -32,11 +32,22 @@ class InvListAdapter(private val invClick: (invObject: RoomDB.InvObject) -> Unit
     fun delete(index: Int): RoomDB.InvObject {
         val removedObject = list.removeAt(index)
         notifyItemRemoved(index)
+        notifyItemRangeChanged(index, itemCount)
         return removedObject
     }
 
     fun dontDelete(index: Int) {
         notifyItemChanged(index)
+    }
+
+    fun add(invObject: RoomDB.InvObject) {
+        list.add(invObject)
+        notifyItemInserted(itemCount)
+    }
+
+    fun updateName(newName: String, position: Int) {
+        list[position] = (list[position] as RoomDB.Item).copy(name = newName)
+        notifyItemChanged(position)
     }
 
     override fun getItemCount(): Int {

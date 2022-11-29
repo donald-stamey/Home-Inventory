@@ -5,34 +5,34 @@ import androidx.room.*
 class RoomDB {
     interface InvObject{
         val id: Int
-        var name: String
+        val name: String
         //fun copy(i: Int? = null, n: String? = null, f: Int? = null, r: Int? = null, s: Int? = null, c: Int? = null, img: String? = null, cat: String? = null): InvObject
     }
     @Entity(tableName = "floors")
     data class Floor(
         @PrimaryKey(autoGenerate = true) override val id: Int,
-        @ColumnInfo(name = "name") override var name: String,
+        @ColumnInfo(name = "name") override val name: String,
     ): InvObject{override fun toString(): String = name}
     //fun gf(i: Int?, n: String?, f: Int?, r: Int?, s: Int?, c: Int?, img: String?, cat: String?) = Floor(i?: this.id, n?: this.name)}
     //override fun copy(i: Int?, n: String?, f: Int?, r: Int?, s: Int?, c: Int?, img: String?, cat: String?) = this.copy(id = i?: this.id, name = n?: this.name)}
     @Entity(tableName = "rooms")
     data class Room(
         @PrimaryKey(autoGenerate = true) override val id: Int,
-        @ColumnInfo(name = "name") override var name: String,
+        @ColumnInfo(name = "name") override val name: String,
         @ColumnInfo(name = "floor_id") val floor_id: Int
     ): InvObject{override fun toString(): String = name}
         //override fun copy(i: Int?, n: String?, f: Int?, r: Int?, s: Int?, c: Int?, img: String?, cat: String?) = this.copy(id = i?: this.id, name = n?: this.name, floor_id = f?: this.floor_id)}
     @Entity(tableName = "surfaces")
     data class Surface(
         @PrimaryKey(autoGenerate = true) override val id: Int,
-        @ColumnInfo(name = "name") override var name: String,
+        @ColumnInfo(name = "name") override val name: String,
         @ColumnInfo(name = "floor_id") val floor_id: Int,
         @ColumnInfo(name = "room_id") val room_id: Int
     ): InvObject{override fun toString(): String = name}
     @Entity(tableName = "containers")
     data class Container(
         @PrimaryKey(autoGenerate = true) override val id: Int,
-        @ColumnInfo(name = "name") override var name: String,
+        @ColumnInfo(name = "name") override val name: String,
         @ColumnInfo(name = "floor_id") val floor_id: Int,
         @ColumnInfo(name = "room_id") val room_id: Int,
         @ColumnInfo(name = "surface_id") val surface_id: Int
@@ -40,17 +40,19 @@ class RoomDB {
     @Entity(tableName = "items")
     data class Item(
         @PrimaryKey(autoGenerate = true) override val id: Int,
-        @ColumnInfo(name = "name") override var name: String,
+        @ColumnInfo(name = "name") override val name: String,
         @ColumnInfo(name = "floor_id") val floor_id: Int,
         @ColumnInfo(name = "room_id") val room_id: Int,
         @ColumnInfo(name = "surface_id") val surface_id: Int,
         @ColumnInfo(name = "container_id") val container_id: Int,
         @ColumnInfo val image: String?,
-        @ColumnInfo val category: String?
+        @ColumnInfo val quantity: Int = 1
     ): InvObject{override fun toString(): String = name}
 
     interface InvDao{
+        fun insert(invObject: InvObject)
         fun getAll(): List<InvObject>
+        fun getById(id: Int): InvObject
         fun delete(invObject: InvObject)
         fun up(invObject: InvObject): InvObject
         fun downList(id: Int): List<InvObject>
@@ -65,6 +67,10 @@ class RoomDB {
         @Query("SELECT * FROM floors")
         fun getAllHelp(): List<Floor>
         override fun getAll(): List<InvObject> = getAllHelp()
+
+        @Query("SELECT * FROM floors WHERE id=:id")
+        fun getByIdHelp(id: Int): Floor
+        override fun getById(id: Int): InvObject = getByIdHelp(id)
 
         //Never should be called
         @Query("SELECT * FROM floors WHERE id=:id")
@@ -93,6 +99,10 @@ class RoomDB {
         fun getAllHelp(): List<Room>
         override fun getAll(): List<InvObject> = getAllHelp()
 
+        @Query("SELECT * FROM rooms WHERE id=:id")
+        fun getByIdHelp(id: Int): Room
+        override fun getById(id: Int): InvObject = getByIdHelp(id)
+
         @Query("SELECT * FROM floors WHERE id=:floor_id")
         fun upHelp(floor_id: Int): Floor
         override fun up(invObject: InvObject) = upHelp((invObject as Room).floor_id)
@@ -118,6 +128,10 @@ class RoomDB {
         @Query("SELECT * FROM surfaces")
         fun getAllHelp(): List<Surface>
         override fun getAll(): List<InvObject> = getAllHelp()
+
+        @Query("SELECT * FROM surfaces WHERE id=:id")
+        fun getByIdHelp(id: Int): Surface
+        override fun getById(id: Int): InvObject = getByIdHelp(id)
 
         @Query("SELECT * FROM rooms WHERE id=:room_id")
         fun upHelp(room_id: Int): Room
@@ -145,6 +159,10 @@ class RoomDB {
         fun getAllHelp(): List<Container>
         override fun getAll(): List<InvObject> = getAllHelp()
 
+        @Query("SELECT * FROM containers WHERE id=:id")
+        fun getByIdHelp(id: Int): Container
+        override fun getById(id: Int): InvObject = getByIdHelp(id)
+
         @Query("SELECT * FROM surfaces WHERE id=:surface_id")
         fun upHelp(surface_id: Int): Surface
         override fun up(invObject: InvObject) = upHelp((invObject as Container).surface_id)
@@ -170,6 +188,10 @@ class RoomDB {
         @Query("SELECT * FROM items")
         fun getAllHelp(): List<Item>
         override fun getAll(): List<InvObject> = getAllHelp()
+
+        @Query("SELECT * FROM items WHERE id=:id")
+        fun getByIdHelp(id: Int): Item
+        override fun getById(id: Int): InvObject = getByIdHelp(id)
 
         @Query("SELECT * FROM items WHERE name LIKE :search")
         fun getSearch(search: String): List<Item>
@@ -204,7 +226,7 @@ class RoomDB {
         override fun delete(invObject: InvObject) = deleteHelp(invObject as Item)
     }
 
-    @Database(entities = [Floor::class, Room::class, Surface::class, Container::class, Item::class], version = 2)
+    @Database(entities = [Floor::class, Room::class, Surface::class, Container::class, Item::class], version = 3)
     abstract class Inventory : RoomDatabase() {
         abstract fun floorDao(): FloorDao
         abstract fun roomDao(): RoomDao

@@ -74,7 +74,7 @@ class NotificationsFragment : Fragment() {
         binding.results.adapter = ResultsAdapter(items)
     }
 
-    fun listOnSpinner(list: List<RoomDB.InvObject>, index: Int) {
+    private fun listOnSpinner(list: List<RoomDB.InvObject>, index: Int) {
         val spinner = spinnerList[index]
         //Floor represents not selected
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item,

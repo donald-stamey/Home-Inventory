@@ -9,10 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
-import android.widget.EditText
-import android.widget.PopupWindow
-import android.widget.TextView
-import androidx.constraintlayout.widget.ConstraintLayout
+import android.widget.*
 import androidx.core.content.ContextCompat.getDrawable
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -25,7 +22,7 @@ import com.example.homeinventory.R
 import com.example.homeinventory.RoomDB
 import com.example.homeinventory.databinding.FragmentDashboardBinding
 import com.example.homeinventory.databinding.DeleteConfirmBinding
-import org.w3c.dom.Text
+import com.example.homeinventory.databinding.ItemBinding
 
 class DashboardFragment : Fragment() {
 
@@ -38,8 +35,11 @@ class DashboardFragment : Fragment() {
     private lateinit var daoList: List<RoomDB.InvDao>
     private var daoIndex = 0
     private lateinit var curInvObject: RoomDB.InvObject
-    private val adapter = InvListAdapter{down(it)}
+    private val adapter = InvListAdapter{invObject: RoomDB.InvObject, position: Int ->
+        down(invObject, position)
+    }
     private lateinit var labelBinding: EditText
+    private var screenHeight = 0
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -76,6 +76,25 @@ class DashboardFragment : Fragment() {
                 it.background = getDrawable(requireContext(), R.drawable.ic_check_black_24dp)
             }
         }
+        binding.add.setOnClickListener {
+            val name = ""
+            val quantity = 1
+            val newInvObject: RoomDB.InvObject = when (daoIndex) {
+                0 -> {RoomDB.Floor(0, name)}
+                1 -> {RoomDB.Room(0, name, (curInvObject as RoomDB.Floor).id)}
+                2 -> {(curInvObject as RoomDB.Room).let {
+                    RoomDB.Surface(0, name, it.floor_id, it.id)
+                }}
+                3 -> {(curInvObject as RoomDB.Surface).let {
+                    RoomDB.Container(0, name, it.floor_id, it.room_id, it.id)
+                }}
+                else -> {(curInvObject as RoomDB.Container).let {
+                    RoomDB.Item(0, name, it.floor_id, it.room_id, it.surface_id, it.id, null, quantity)
+                }}
+            }
+            daoList[daoIndex].insert(newInvObject)
+            adapter.add(newInvObject)
+        }
     }
 
     private fun setup() {
@@ -91,6 +110,9 @@ class DashboardFragment : Fragment() {
         labelBinding.setText("Floors")
         binding.back.visibility = View.INVISIBLE
         binding.edit.visibility = View.INVISIBLE
+        val metrics = (requireContext() as Activity).windowManager.currentWindowMetrics
+        val insets = metrics.windowInsets.getInsets(WindowInsets.Type.navigationBars() or WindowInsets.Type.displayCutout())
+        screenHeight = metrics.bounds.height() - (insets.bottom + insets.top)
     }
 
     private fun setupRV() {
@@ -102,12 +124,7 @@ class DashboardFragment : Fragment() {
                                 target: RecyclerView.ViewHolder): Boolean = true
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val deleteBinding = DeleteConfirmBinding.inflate(layoutInflater)
-                val screenHeight = (requireContext() as Activity).windowManager
-                    .currentWindowMetrics.windowInsets.getInsets(WindowInsets.Type.navigationBars() or WindowInsets.Type.displayCutout())
-                val screenHeight2 = screenHeight.bottom + screenHeight.top
-                val bounds = (requireContext() as Activity).windowManager
-                    .currentWindowMetrics.bounds.height()
-                val popup = PopupWindow(deleteBinding.root, binding.root.measuredWidth, bounds - screenHeight2, true)
+                val popup = PopupWindow(deleteBinding.root, binding.root.measuredWidth, screenHeight, true)
                 popup.showAtLocation(binding.root, Gravity.TOP, 0, 0)
                 deleteBinding.cancel.setOnClickListener {
                     adapter.dontDelete(viewHolder.adapterPosition)
@@ -117,14 +134,11 @@ class DashboardFragment : Fragment() {
                     daoList[daoIndex].delete(adapter.delete(viewHolder.adapterPosition))
                     popup.dismiss()
                 }
-                popup.setOnDismissListener {
-
-                }
             }
         }).attachToRecyclerView(binding.rv)
     }
 
-    private fun down(invObject: RoomDB.InvObject) {
+    private fun down(invObject: RoomDB.InvObject, position: Int) {
         if(daoIndex < daoList.size - 1) {
             binding.back.visibility = View.VISIBLE
             binding.edit.visibility = View.VISIBLE
@@ -133,7 +147,42 @@ class DashboardFragment : Fragment() {
             adapter.submitList(daoList[daoIndex].downList(curInvObject.id))
             daoIndex++
         } else {
-            //open item page
+            val itemBinding = ItemBinding.inflate(layoutInflater)
+            val popup = PopupWindow(itemBinding.root, binding.root.measuredWidth, screenHeight, true)
+            popup.showAtLocation(binding.root, Gravity.TOP, 0, 0)
+            itemBinding.back.setOnClickListener {
+                popup.dismiss()
+            }
+            itemBinding.delete.setOnClickListener {
+                val deleteBinding = DeleteConfirmBinding.inflate(layoutInflater)
+                val deletePopup = PopupWindow(deleteBinding.root, binding.root.measuredWidth, screenHeight, true)
+                deletePopup.showAtLocation(binding.root, Gravity.TOP, 0, 0)
+                deleteBinding.cancel.setOnClickListener {
+                    deletePopup.dismiss()
+                }
+                deleteBinding.yes.setOnClickListener {
+                    daoList[daoIndex].delete(adapter.delete(position))
+                    deletePopup.dismiss()
+                    popup.dismiss()
+                }
+            }
+            val item = invObject as RoomDB.Item
+            val itemLabel = itemBinding.label
+            itemLabel.isEnabled = false
+            itemLabel.setTextColor(Color.BLACK)
+            itemLabel.setText(item.name)
+            itemBinding.edit.setOnClickListener {
+                if(itemLabel.isEnabled) {
+                    itemLabel.isEnabled = false
+                    daoList.last().update(item.copy(name = itemLabel.text.toString()))
+                    adapter.updateName(itemLabel.text.toString(), position)
+                    it.background = getDrawable(requireContext(), R.drawable.ic_edit_black_24dp)
+                } else {
+                    itemLabel.isEnabled = true
+                    it.background = getDrawable(requireContext(), R.drawable.ic_check_black_24dp)
+                }
+            }
+            setupSpinners(item, itemBinding)
         }
     }
 
@@ -149,6 +198,42 @@ class DashboardFragment : Fragment() {
             labelBinding.setText("Floors")
             binding.back.visibility = View.INVISIBLE
             binding.edit.visibility = View.INVISIBLE
+        }
+    }
+
+    private fun setupSpinners(item: RoomDB.Item, binding: ItemBinding) {
+        val spinnerList = listOf(binding.floorSpin, binding.roomSpin, binding.surfaceSpin, binding.containerSpin)
+        val idList = mutableListOf(item.floor_id, item.room_id, item.surface_id, item.container_id)
+        listOnSpinner(daoList[0].getAll(), 0, spinnerList, idList)
+    }
+
+    private fun listOnSpinner(list: List<RoomDB.InvObject>, index: Int, spinnerList: List<Spinner>, idList: MutableList<Int>) {
+        val spinner = spinnerList[index]
+        //Floor represents not selected
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item,
+            listOf<RoomDB.InvObject>(RoomDB.Floor(-1, "Select")) + list)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
+        if(idList[index] != -1) {
+            spinner.setSelection(list.indexOf(daoList[index].getById(idList[index])) + 1)
+            Log.d("XXX", "Setting spinner pos to: " + list.indexOf(daoList[index].getById(idList[index])) + 1)
+        }
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
+                for(i in index + 1 until idList.size) {
+                    spinnerList[i].adapter = null
+                    //idList[i] = -1
+                }
+                if(p2 == 0) {
+                    idList[index] = -1
+                } else {
+                    idList[index] = list[p2 - 1].id
+                    if(index < daoList.size - 2) {
+                        listOnSpinner(daoList[index].downList(idList[index]), index + 1, spinnerList, idList)
+                    }
+                }
+            }
+            override fun onNothingSelected(p0: AdapterView<*>?) {}
         }
     }
 
