@@ -63,6 +63,7 @@ class RoomDB {
     interface FloorDao: InvDao{
         @Insert
         fun insertFloor(floor: Floor)
+        override fun insert(invObject: InvObject) = insertFloor(invObject as Floor)
 
         @Query("SELECT * FROM floors")
         fun getAllHelp(): List<Floor>
@@ -94,6 +95,7 @@ class RoomDB {
     interface RoomDao: InvDao{
         @Insert
         fun insertRoom(room: Room)
+        override fun insert(invObject: InvObject) = insertRoom(invObject as Room)
 
         @Query("SELECT * FROM rooms")
         fun getAllHelp(): List<Room>
@@ -124,6 +126,7 @@ class RoomDB {
     interface SurfaceDao: InvDao{
         @Insert
         fun insertSurface(surface: Surface)
+        override fun insert(invObject: InvObject) = insertSurface(invObject as Surface)
 
         @Query("SELECT * FROM surfaces")
         fun getAllHelp(): List<Surface>
@@ -154,6 +157,7 @@ class RoomDB {
     interface ContainerDao: InvDao{
         @Insert
         fun insertContainer(container: Container)
+        override fun insert(invObject: InvObject) = insertContainer(invObject as Container)
 
         @Query("SELECT * FROM containers")
         fun getAllHelp(): List<Container>
@@ -184,6 +188,7 @@ class RoomDB {
     interface ItemDao: InvDao{
         @Insert
         fun insertItem(item: Item)
+        override fun insert(invObject: InvObject) = insertItem(invObject as Item)
 
         @Query("SELECT * FROM items")
         fun getAllHelp(): List<Item>

@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/search"
         app:layout_constraintTop_toTopOf="parent"
-        android:textSize="24sp"
+        android:textSize="32sp"
         android:padding="16dp"
         android:hint="Search..."/>
 

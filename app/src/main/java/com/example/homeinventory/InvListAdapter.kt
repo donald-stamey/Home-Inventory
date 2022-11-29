@@ -50,6 +50,11 @@ class InvListAdapter(private val invClick: (invObject: RoomDB.InvObject, positio
         notifyItemChanged(position)
     }
 
+    fun updateQuantity(newQuantity: Int, position: Int) {
+        list[position] = (list[position] as RoomDB.Item).copy(quantity = newQuantity)
+        notifyItemChanged(position)
+    }
+
     override fun getItemCount(): Int {
         return list.size
     }

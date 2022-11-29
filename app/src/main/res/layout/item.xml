@@ -167,15 +167,17 @@
         android:padding="8dp"
         android:text="Quantity"/>
 
-    <NumberPicker
+    <EditText
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:id="@+id/quantityNum"
+        android:inputType="number"
         app:layout_constraintTop_toTopOf="@id/quantity"
         app:layout_constraintBottom_toBottomOf="@id/quantity"
         app:layout_constraintStart_toEndOf="@id/quantity"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_margin="8dp"/>
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"/>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
