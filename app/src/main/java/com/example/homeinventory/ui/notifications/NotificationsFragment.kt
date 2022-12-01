@@ -13,6 +13,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.room.Room
+import com.example.homeinventory.InvUtils
 import com.example.homeinventory.MainActivity
 import com.example.homeinventory.ResultsAdapter
 import com.example.homeinventory.RoomDB
@@ -25,9 +26,8 @@ class NotificationsFragment : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
-    private lateinit var db: RoomDB.Inventory
-    private lateinit var daoList: List<RoomDB.InvDao>
-    private lateinit var itemDao: RoomDB.ItemDao
+    private val daoList = InvUtils.daoList
+    private val itemDao = InvUtils.itemDao
     private lateinit var spinnerList: List<Spinner>
     private val idList = mutableListOf(-1, -1, -1, -1)
 
@@ -47,11 +47,6 @@ class NotificationsFragment : Fragment() {
         binding.results.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
         binding.results.addItemDecoration(DividerItemDecoration(requireContext(), 1))
         spinnerList = listOf(binding.floorSpin, binding.roomSpin, binding.surfaceSpin, binding.containerSpin)
-        db = Room.databaseBuilder(
-            requireContext(), RoomDB.Inventory::class.java, "inventory")
-            .allowMainThreadQueries().fallbackToDestructiveMigration().build()
-        daoList = listOf(db.floorDao(), db.roomDao(), db.surfaceDao(), db.containerDao())
-        itemDao = db.itemDao()
         listOnSpinner(daoList[0].getAll(), 0)
         binding.searchButton.setOnClickListener {
             search()

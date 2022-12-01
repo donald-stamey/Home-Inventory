@@ -36,9 +36,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.room.Room
 import androidx.viewbinding.ViewBinding
-import com.example.homeinventory.InvListAdapter
-import com.example.homeinventory.R
-import com.example.homeinventory.RoomDB
+import com.example.homeinventory.*
+import com.example.homeinventory.InvUtils.makePopup
 import com.example.homeinventory.databinding.AddObjectBinding
 import com.example.homeinventory.databinding.CameraBinding
 import com.example.homeinventory.databinding.FragmentDashboardBinding
@@ -55,15 +54,13 @@ class DashboardFragment : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
-    private lateinit var db: RoomDB.Inventory
-    private lateinit var daoList: List<RoomDB.InvDao>
+    private val daoList = InvUtils.daoList
     private var daoIndex = 0
     private lateinit var curInvObject: RoomDB.InvObject
     private val adapter = InvListAdapter{invObject: RoomDB.InvObject, position: Int ->
         down(invObject, position)
     }
     private lateinit var labelBinding: EditText
-    private var screenHeight = 0
     var imageCapture: ImageCapture? = null
     private val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
 
@@ -141,10 +138,6 @@ class DashboardFragment : Fragment() {
     }
 
     private fun setup() {
-        db = Room.databaseBuilder(
-            requireContext(), RoomDB.Inventory::class.java, "inventory")
-            .allowMainThreadQueries().fallbackToDestructiveMigration().build()
-        daoList = listOf(db.floorDao(), db.roomDao(), db.surfaceDao(), db.containerDao(), db.itemDao())
         setupRV()
         adapter.submitList(daoList[daoIndex].getAll())
         labelBinding = binding.label
@@ -153,9 +146,6 @@ class DashboardFragment : Fragment() {
         labelBinding.setText("Floors")
         binding.back.visibility = View.INVISIBLE
         binding.edit.visibility = View.INVISIBLE
-        val metrics = (requireContext() as Activity).windowManager.currentWindowMetrics
-        val insets = metrics.windowInsets.getInsets(WindowInsets.Type.navigationBars() or WindowInsets.Type.displayCutout())
-        screenHeight = metrics.bounds.height() - (insets.bottom + insets.top)
     }
 
     private fun setupRV() {
@@ -189,147 +179,7 @@ class DashboardFragment : Fragment() {
             adapter.submitList(daoList[daoIndex].downList(curInvObject.id))
             daoIndex++
         } else {
-            itemPopup(invObject, position)
-        }
-    }
-
-    private fun itemPopup(invObject: RoomDB.InvObject, position: Int) {
-        val itemBinding = ItemBinding.inflate(layoutInflater)
-        val popup = makePopup(itemBinding.root)
-        val item = invObject as RoomDB.Item
-        val idList = mutableListOf(item.floor_id, item.room_id, item.surface_id, item.container_id)
-        setupSpinners(item, itemBinding, idList)
-        itemBinding.back.setOnClickListener {
-            if (itemBinding.containerSpin.adapter != null && idList.last() != -1) {
-                itemBinding.quantityNum.text.toString().let {
-                    if (it.isNotEmpty() && it.toInt() != item.quantity) {
-                        daoList.last().update(item.copy(quantity = it.toInt()))
-                        adapter.updateQuantity(it.toInt(), position)
-                    }
-                }
-                if (idList.last() != item.container_id) {
-                    daoList.last().update(
-                        item.copy(
-                            floor_id = idList[0],
-                            room_id = idList[1],
-                            surface_id = idList[2],
-                            container_id = idList[3]
-                        )
-                    )
-                    adapter.delete(position)
-                }
-                popup.dismiss()
-            } else {
-                mustHaveContainerPopup()
-            }
-        }
-        itemBinding.delete.setOnClickListener {
-            val deleteBinding = DeleteConfirmBinding.inflate(layoutInflater)
-            val deletePopup = makePopup(deleteBinding.root)
-            deleteBinding.cancel.setOnClickListener {
-                deletePopup.dismiss()
-            }
-            deleteBinding.yes.setOnClickListener {
-                daoList[daoIndex].delete(adapter.delete(position))
-                deletePopup.dismiss()
-                popup.dismiss()
-            }
-        }
-        itemBinding.camera.setOnClickListener {
-            val cameraBinding = CameraBinding.inflate(layoutInflater)
-            val popup = makePopup(cameraBinding.root)
-            startCamera(cameraBinding.preview.surfaceProvider)
-            cameraBinding.takePicture.setOnClickListener {
-                takePhoto {
-                    daoList.last().update(item.copy(image = it))
-                    popup.dismiss()
-                    itemBinding.image.setImageURI(Uri.parse(it))
-                }
-            }
-        }
-        val itemLabel = itemBinding.label
-        itemLabel.isEnabled = false
-        itemLabel.setTextColor(Color.BLACK)
-        itemLabel.setText(item.name)
-        itemBinding.edit.setOnClickListener {
-            if (itemLabel.isEnabled) {
-                itemLabel.isEnabled = false
-                daoList.last().update(item.copy(name = itemLabel.text.toString()))
-                adapter.updateName(itemLabel.text.toString(), position)
-                it.background = getDrawable(requireContext(), R.drawable.ic_edit_black_24dp)
-            } else {
-                itemLabel.isEnabled = true
-                it.background = getDrawable(requireContext(), R.drawable.ic_check_black_24dp)
-            }
-        }
-        itemBinding.quantityNum.setText(item.quantity.toString())
-        if(item.image != null) {
-            itemBinding.image.setImageURI(Uri.parse(item.image))
-        }
-    }
-
-    //https://developer.android.com/codelabs/camerax-getting-started
-    private fun takePhoto(savePhoto: (uri: String) -> Unit) {
-        Log.d("XXX", "takePhoto() called")
-        // Get a stable reference of the modifiable image capture use case
-        val imageCapture = imageCapture ?: return
-        // Create time stamped name and MediaStore entry.
-        val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis())
-        val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, name)
-            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Inventory-Image")
-        }
-
-        // Create output options object which contains file + metadata
-        val outputOptions = ImageCapture.OutputFileOptions
-            .Builder(requireContext().contentResolver, MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-            .build()
-
-        Log.d("XXX", "actually gonna take the picture")
-        // Set up image capture listener, which is triggered after photo has been taken
-        imageCapture.takePicture(outputOptions, ContextCompat.getMainExecutor(requireContext()),
-            object : ImageCapture.OnImageSavedCallback {
-                override fun onError(exc: ImageCaptureException) {
-                    Log.e("XXX", "Photo capture failed: ${exc.message}", exc)
-                }
-
-                override fun onImageSaved(output: ImageCapture.OutputFileResults){
-                    Log.d("XXX", "Photo capture succeeded: ${output.savedUri}")
-                    savePhoto(output.savedUri.toString())
-                }
-            }
-        )
-    }
-
-    private fun startCamera(surfaceProvider: SurfaceProvider) {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
-        cameraProviderFuture.addListener({
-            // Used to bind the lifecycle of cameras to the lifecycle owner
-            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-            // Preview
-            val preview = Preview.Builder().build().also{it.setSurfaceProvider(surfaceProvider)}
-            imageCapture = ImageCapture.Builder().build()
-            // Select back camera as a default
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-            try {
-                // Unbind use cases before rebinding
-                cameraProvider.unbindAll()
-                // Bind use cases to camera
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
-
-            } catch(exc: Exception) {
-                Log.e("XXX", "Use case binding failed", exc)
-            }
-
-        }, ContextCompat.getMainExecutor(requireContext()))
-    }
-
-    private fun mustHaveContainerPopup() {
-        val mustBinding = MustHaveContainerBinding.inflate(layoutInflater)
-        val popup = makePopup(mustBinding.root)
-        mustBinding.okay.setOnClickListener {
-            popup.dismiss()
+            InvUtils.itemPopup(invObject, position, layoutInflater, requireContext(), viewLifecycleOwner)
         }
     }
 
@@ -346,46 +196,6 @@ class DashboardFragment : Fragment() {
             binding.back.visibility = View.INVISIBLE
             binding.edit.visibility = View.INVISIBLE
         }
-    }
-
-    private fun setupSpinners(item: RoomDB.Item, binding: ItemBinding, idList: MutableList<Int>) {
-        val spinnerList = listOf(binding.floorSpin, binding.roomSpin, binding.surfaceSpin, binding.containerSpin)
-        listOnSpinner(daoList[0].getAll(), 0, spinnerList, idList)
-    }
-
-    private fun listOnSpinner(list: List<RoomDB.InvObject>, index: Int, spinnerList: List<Spinner>, idList: MutableList<Int>) {
-        val spinner = spinnerList[index]
-        //Floor represents not selected
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item,
-            listOf<RoomDB.InvObject>(RoomDB.Floor(-1, "Select")) + list)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinner.adapter = adapter
-        if(idList[index] != -1) {
-            spinner.setSelection(list.indexOf(daoList[index].getById(idList[index])) + 1)
-        }
-        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
-                for(i in index + 1 until idList.size) {
-                    spinnerList[i].adapter = null
-                    //idList[i] = -1
-                }
-                if(p2 == 0) {
-                    idList[index] = -1
-                } else {
-                    idList[index] = list[p2 - 1].id
-                    if(index < daoList.size - 2) {
-                        listOnSpinner(daoList[index].downList(idList[index]), index + 1, spinnerList, idList)
-                    }
-                }
-            }
-            override fun onNothingSelected(p0: AdapterView<*>?) {}
-        }
-    }
-
-    private fun makePopup(popupBinding: ConstraintLayout): PopupWindow {
-        val popup = PopupWindow(popupBinding, binding.root.measuredWidth, screenHeight, true)
-        popup.showAtLocation(binding.root, Gravity.TOP, 0, 0)
-        return popup
     }
 
     override fun onDestroyView() {

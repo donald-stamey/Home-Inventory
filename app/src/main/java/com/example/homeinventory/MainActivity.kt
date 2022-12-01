@@ -3,21 +3,21 @@ package com.example.homeinventory
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.view.WindowInsets
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
+import androidx.room.Room
 import com.example.homeinventory.databinding.ActivityMainBinding
-import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val REQUEST_CODE_PERMISSIONS = 10
     private val REQUIRED_PERMISSIONS = mutableListOf(Manifest.permission.CAMERA).toTypedArray()
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,6 +30,12 @@ class MainActivity : AppCompatActivity() {
         if(!allPermissionsGranted()) {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }
+        val metrics = this.windowManager.currentWindowMetrics
+        val insets = metrics.windowInsets.getInsets(WindowInsets.Type.navigationBars() or WindowInsets.Type.displayCutout())
+        val db = Room.databaseBuilder(this, RoomDB.Inventory::class.java, "inventory")
+            .allowMainThreadQueries().fallbackToDestructiveMigration().build()
+        val daoList = listOf(db.floorDao(), db.roomDao(), db.surfaceDao(), db.containerDao(), db.itemDao())
+        InvUtils.setup(metrics.bounds.height() - (insets.bottom + insets.top), binding.root.measuredWidth, daoList)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
