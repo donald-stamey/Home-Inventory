@@ -39,12 +39,22 @@
 
     <ImageView
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:minHeight="50dp"
         android:id="@+id/image"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/back"
         app:layout_constraintBottom_toTopOf="@id/label"/>
+
+    <ImageButton
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:id="@+id/camera"
+        app:layout_constraintStart_toStartOf="@id/delete"
+        app:layout_constraintEnd_toEndOf="@id/delete"
+        app:layout_constraintTop_toTopOf="@id/image"
+        android:background="@drawable/ic_camera_black_24dp"/>
 
     <EditText
         android:layout_width="0dp"

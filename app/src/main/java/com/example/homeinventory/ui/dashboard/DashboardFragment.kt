@@ -1,8 +1,16 @@
 package com.example.homeinventory.ui.dashboard
 
+import android.Manifest
 import android.app.Activity
+import android.content.ContentResolver
+import android.content.ContentValues
+import android.content.pm.PackageManager
 import android.graphics.Color
+import android.icu.text.SimpleDateFormat
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -10,7 +18,16 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.widget.*
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.Preview
+import androidx.camera.core.Preview.SurfaceProvider
+import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContentResolverCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getDrawable
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -23,10 +40,13 @@ import com.example.homeinventory.InvListAdapter
 import com.example.homeinventory.R
 import com.example.homeinventory.RoomDB
 import com.example.homeinventory.databinding.AddObjectBinding
+import com.example.homeinventory.databinding.CameraBinding
 import com.example.homeinventory.databinding.FragmentDashboardBinding
 import com.example.homeinventory.databinding.DeleteConfirmBinding
 import com.example.homeinventory.databinding.ItemBinding
 import com.example.homeinventory.databinding.MustHaveContainerBinding
+import java.util.*
+import java.util.concurrent.Executors
 
 class DashboardFragment : Fragment() {
 
@@ -44,6 +64,8 @@ class DashboardFragment : Fragment() {
     }
     private lateinit var labelBinding: EditText
     private var screenHeight = 0
+    var imageCapture: ImageCapture? = null
+    private val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -178,16 +200,22 @@ class DashboardFragment : Fragment() {
         val idList = mutableListOf(item.floor_id, item.room_id, item.surface_id, item.container_id)
         setupSpinners(item, itemBinding, idList)
         itemBinding.back.setOnClickListener {
-            if(itemBinding.containerSpin.adapter != null && idList.last() != -1) {
+            if (itemBinding.containerSpin.adapter != null && idList.last() != -1) {
                 itemBinding.quantityNum.text.toString().let {
-                    if(it.isNotEmpty() && it.toInt() != item.quantity) {
+                    if (it.isNotEmpty() && it.toInt() != item.quantity) {
                         daoList.last().update(item.copy(quantity = it.toInt()))
                         adapter.updateQuantity(it.toInt(), position)
                     }
                 }
-                if(idList.last() != item.container_id) {
-                    daoList.last().update(item.copy(
-                        floor_id = idList[0], room_id = idList[1], surface_id = idList[2], container_id = idList[3]))
+                if (idList.last() != item.container_id) {
+                    daoList.last().update(
+                        item.copy(
+                            floor_id = idList[0],
+                            room_id = idList[1],
+                            surface_id = idList[2],
+                            container_id = idList[3]
+                        )
+                    )
                     adapter.delete(position)
                 }
                 popup.dismiss()
@@ -207,12 +235,24 @@ class DashboardFragment : Fragment() {
                 popup.dismiss()
             }
         }
+        itemBinding.camera.setOnClickListener {
+            val cameraBinding = CameraBinding.inflate(layoutInflater)
+            val popup = makePopup(cameraBinding.root)
+            startCamera(cameraBinding.preview.surfaceProvider)
+            cameraBinding.takePicture.setOnClickListener {
+                takePhoto {
+                    daoList.last().update(item.copy(image = it))
+                    popup.dismiss()
+                    itemBinding.image.setImageURI(Uri.parse(it))
+                }
+            }
+        }
         val itemLabel = itemBinding.label
         itemLabel.isEnabled = false
         itemLabel.setTextColor(Color.BLACK)
         itemLabel.setText(item.name)
         itemBinding.edit.setOnClickListener {
-            if(itemLabel.isEnabled) {
+            if (itemLabel.isEnabled) {
                 itemLabel.isEnabled = false
                 daoList.last().update(item.copy(name = itemLabel.text.toString()))
                 adapter.updateName(itemLabel.text.toString(), position)
@@ -223,6 +263,66 @@ class DashboardFragment : Fragment() {
             }
         }
         itemBinding.quantityNum.setText(item.quantity.toString())
+        if(item.image != null) {
+            itemBinding.image.setImageURI(Uri.parse(item.image))
+        }
+    }
+
+    //https://developer.android.com/codelabs/camerax-getting-started
+    private fun takePhoto(savePhoto: (uri: String) -> Unit) {
+        Log.d("XXX", "takePhoto() called")
+        // Get a stable reference of the modifiable image capture use case
+        val imageCapture = imageCapture ?: return
+        // Create time stamped name and MediaStore entry.
+        val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis())
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Inventory-Image")
+        }
+
+        // Create output options object which contains file + metadata
+        val outputOptions = ImageCapture.OutputFileOptions
+            .Builder(requireContext().contentResolver, MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+            .build()
+
+        Log.d("XXX", "actually gonna take the picture")
+        // Set up image capture listener, which is triggered after photo has been taken
+        imageCapture.takePicture(outputOptions, ContextCompat.getMainExecutor(requireContext()),
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onError(exc: ImageCaptureException) {
+                    Log.e("XXX", "Photo capture failed: ${exc.message}", exc)
+                }
+
+                override fun onImageSaved(output: ImageCapture.OutputFileResults){
+                    Log.d("XXX", "Photo capture succeeded: ${output.savedUri}")
+                    savePhoto(output.savedUri.toString())
+                }
+            }
+        )
+    }
+
+    private fun startCamera(surfaceProvider: SurfaceProvider) {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
+        cameraProviderFuture.addListener({
+            // Used to bind the lifecycle of cameras to the lifecycle owner
+            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+            // Preview
+            val preview = Preview.Builder().build().also{it.setSurfaceProvider(surfaceProvider)}
+            imageCapture = ImageCapture.Builder().build()
+            // Select back camera as a default
+            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            try {
+                // Unbind use cases before rebinding
+                cameraProvider.unbindAll()
+                // Bind use cases to camera
+                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
+
+            } catch(exc: Exception) {
+                Log.e("XXX", "Use case binding failed", exc)
+            }
+
+        }, ContextCompat.getMainExecutor(requireContext()))
     }
 
     private fun mustHaveContainerPopup() {

@@ -1,5 +1,6 @@
 package com.example.homeinventory
 
+import android.net.Uri
 import androidx.room.*
 
 class RoomDB {
@@ -231,7 +232,7 @@ class RoomDB {
         override fun delete(invObject: InvObject) = deleteHelp(invObject as Item)
     }
 
-    @Database(entities = [Floor::class, Room::class, Surface::class, Container::class, Item::class], version = 3)
+    @Database(entities = [Floor::class, Room::class, Surface::class, Container::class, Item::class], version = 4)
     abstract class Inventory : RoomDatabase() {
         abstract fun floorDao(): FloorDao
         abstract fun roomDao(): RoomDao

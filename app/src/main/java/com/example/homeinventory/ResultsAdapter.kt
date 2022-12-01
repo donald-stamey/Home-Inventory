@@ -1,5 +1,7 @@
 package com.example.homeinventory
 
+import android.net.Uri
+import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -22,9 +24,13 @@ class ResultsAdapter(private val list: List<RoomDB.Item>) :
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val binding = holder.rowBinding
-        binding.name.text = list[position].name
-        binding.container.text = list[position].container_id.toString()
-        binding.quantity.text = "1"
+        val item = list[position]
+        binding.name.text = item.name
+        binding.container.text = item.container_id.toString()
+        binding.quantity.text = "Quantity: " + item.quantity.toString()
+        if(item.image != null) {
+            binding.image.setImageURI(Uri.parse(item.image))
+        }
     }
 
     override fun getItemCount(): Int {
