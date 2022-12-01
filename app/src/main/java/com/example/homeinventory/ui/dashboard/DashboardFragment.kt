@@ -163,11 +163,20 @@ class DashboardFragment : Fragment() {
                     popup.dismiss()
                 }
                 deleteBinding.yes.setOnClickListener {
-                    daoList[daoIndex].delete(adapter.delete(viewHolder.adapterPosition))
+                    cascadeDelete(adapter.delete(viewHolder.adapterPosition), daoIndex)
                     popup.dismiss()
                 }
             }
         }).attachToRecyclerView(binding.rv)
+    }
+
+    private fun cascadeDelete(invObject: RoomDB.InvObject, index: Int) {
+        if(index < daoList.size - 1) {
+            daoList[index].downList(invObject.id).forEach {
+                cascadeDelete(it, index + 1)
+            }
+        }
+        daoList[index].delete(invObject)
     }
 
     private fun down(invObject: RoomDB.InvObject, position: Int) {
@@ -179,7 +188,13 @@ class DashboardFragment : Fragment() {
             adapter.submitList(daoList[daoIndex].downList(curInvObject.id))
             daoIndex++
         } else {
-            InvUtils.itemPopup(invObject, position, layoutInflater, requireContext(), viewLifecycleOwner)
+            InvUtils.itemPopup(
+                invObject as RoomDB.Item, position, layoutInflater, requireContext(), viewLifecycleOwner,
+                {name, pos -> adapter.updateName(name, pos)},
+                {quantity, pos -> adapter.updateQuantity(quantity, pos)},
+                {image, pos -> adapter.updateImage(image, pos)},
+                {pos -> adapter.delete(pos) as RoomDB.Item}
+            )
         }
     }
 

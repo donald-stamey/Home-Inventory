@@ -12,7 +12,7 @@
         app:layout_constraintTop_toTopOf="@id/name"
         app:layout_constraintBottom_toBottomOf="@id/quantity"
         app:layout_constraintStart_toStartOf="parent"
-        android:src="@drawable/ic_add_black_24dp"/>
+        android:src="@drawable/ic_camera_black_24dp"/>
 
     <TextView
         android:layout_width="0dp"

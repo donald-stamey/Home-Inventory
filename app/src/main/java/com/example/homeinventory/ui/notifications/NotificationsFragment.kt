@@ -11,12 +11,15 @@ import android.widget.Spinner
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.room.Room
 import com.example.homeinventory.InvUtils
 import com.example.homeinventory.MainActivity
 import com.example.homeinventory.ResultsAdapter
 import com.example.homeinventory.RoomDB
+import com.example.homeinventory.databinding.DeleteConfirmBinding
 import com.example.homeinventory.databinding.FragmentNotificationsBinding
 
 class NotificationsFragment : Fragment() {
@@ -26,9 +29,8 @@ class NotificationsFragment : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
-    private val daoList = InvUtils.daoList
+    private lateinit var adapter: ResultsAdapter
     private val itemDao = InvUtils.itemDao
-    private lateinit var spinnerList: List<Spinner>
     private val idList = mutableListOf(-1, -1, -1, -1)
 
     override fun onCreateView(
@@ -44,13 +46,36 @@ class NotificationsFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        binding.results.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-        binding.results.addItemDecoration(DividerItemDecoration(requireContext(), 1))
-        spinnerList = listOf(binding.floorSpin, binding.roomSpin, binding.surfaceSpin, binding.containerSpin)
-        listOnSpinner(daoList[0].getAll(), 0)
+        adapter = ResultsAdapter(itemDao){item, position -> openItem(item, position)}
+        setupRV()
+        val spinnerList = listOf(binding.floorSpin, binding.roomSpin, binding.surfaceSpin, binding.containerSpin)
+        InvUtils.listOnSpinner(InvUtils.daoList[0].getAll(), 0, spinnerList, idList, requireContext(), false)
         binding.searchButton.setOnClickListener {
             search()
         }
+    }
+
+    private fun setupRV() {
+        binding.results.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+        binding.results.addItemDecoration(DividerItemDecoration(requireContext(), 1))
+        binding.results.adapter = adapter
+        ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
+            0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
+            override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder,
+                                target: RecyclerView.ViewHolder): Boolean = true
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val deleteBinding = DeleteConfirmBinding.inflate(layoutInflater)
+                val popup = InvUtils.makePopup(deleteBinding.root)
+                deleteBinding.cancel.setOnClickListener {
+                    adapter.dontDelete(viewHolder.adapterPosition)
+                    popup.dismiss()
+                }
+                deleteBinding.yes.setOnClickListener {
+                    itemDao.delete(adapter.delete(viewHolder.adapterPosition))
+                    popup.dismiss()
+                }
+            }
+        }).attachToRecyclerView(binding.results)
     }
 
     private fun search() {
@@ -66,33 +91,21 @@ class NotificationsFragment : Fragment() {
         } else {
             itemDao.getSearch(search)
         }
-        binding.results.adapter = ResultsAdapter(items)
+        adapter.submitList(items)
     }
 
-    private fun listOnSpinner(list: List<RoomDB.InvObject>, index: Int) {
-        val spinner = spinnerList[index]
-        //Floor represents not selected
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item,
-            listOf<RoomDB.InvObject>(RoomDB.Floor(-1, "Select")) + list)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinner.adapter = adapter
-        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
-                for(i in index + 1 until idList.size) {
-                    spinnerList[i].adapter = null
-                    idList[i] = -1
-                }
-                if(p2 == 0) {
-                    idList[index] = -1
-                } else {
-                    idList[index] = list[p2 - 1].id
-                    if(index < daoList.size - 1) {
-                        listOnSpinner(daoList[index].downList(idList[index]), index + 1)
-                    }
-                }
+    private fun openItem(item: RoomDB.Item, position: Int) {
+        InvUtils.itemPopup(
+            item, position, layoutInflater, requireContext(), viewLifecycleOwner,
+            {name, pos -> adapter.updateName(name, pos)},
+            {quantity, pos -> adapter.updateQuantity(quantity, pos)},
+            {image, pos -> adapter.updateImage(image, pos)},
+            {pos ->
+                val deleted = adapter.delete(pos)
+                search()
+                deleted
             }
-            override fun onNothingSelected(p0: AdapterView<*>?) {}
-        }
+        )
     }
 
     override fun onDestroyView() {

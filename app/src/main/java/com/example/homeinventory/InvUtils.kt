@@ -12,6 +12,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.ListAdapter
 import android.widget.PopupWindow
 import android.widget.Spinner
 import androidx.camera.core.CameraSelector
@@ -22,6 +23,9 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.homeinventory.databinding.CameraBinding
 import com.example.homeinventory.databinding.DeleteConfirmBinding
 import com.example.homeinventory.databinding.ItemBinding
@@ -31,17 +35,32 @@ import java.util.*
 object InvUtils {
     private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
     private var imageCapture: ImageCapture? = null
-    private var screenHeight = 0
-    private var screenWidth = 0
+     var screenHeight = 0
+     var screenWidth = 0
     lateinit var daoList: List<RoomDB.InvDao>
     lateinit var itemDao: RoomDB.ItemDao
 
-    fun itemPopup(invObject: RoomDB.InvObject, position: Int, layoutInflater: LayoutInflater,
+    fun setup(height: Int, width: Int, list: List<RoomDB.InvDao>) {
+        screenHeight = height
+        screenWidth = width
+        daoList = list
+        itemDao = list.last() as RoomDB.ItemDao
+    }
+
+    fun makePopup(popupBinding: ConstraintLayout): PopupWindow {
+        val popup = PopupWindow(popupBinding, screenWidth, screenHeight, true)
+        popup.showAtLocation(popupBinding, Gravity.TOP, 0, 0)
+        return popup
+    }
+
+    fun itemPopup(item: RoomDB.Item, position: Int, layoutInflater: LayoutInflater,
                   context: Context, lifecycleOwner: LifecycleOwner,
-                  updateName: (name: String, position: Int) -> Unit) {
+                  updateName: (name: String, position: Int) -> Unit,
+                  updateQuantity: (quantity: Int, position: Int) -> Unit,
+                  updateImage: (image: String, position: Int) -> Unit,
+                  delete: (position: Int) -> RoomDB.Item) {
         val itemBinding = ItemBinding.inflate(layoutInflater)
         val popup = makePopup(itemBinding.root)
-        val item = invObject as RoomDB.Item
         val idList = mutableListOf(item.floor_id, item.room_id, item.surface_id, item.container_id)
         setupSpinners(itemBinding, idList, context)
         itemBinding.back.setOnClickListener {
@@ -49,12 +68,12 @@ object InvUtils {
                 itemBinding.quantityNum.text.toString().let {
                     if (it.isNotEmpty() && it.toInt() != item.quantity) {
                         itemDao.update(item.copy(quantity = it.toInt()))
-                        //~~~~~adapter.updateQuantity(it.toInt(), position)
+                        updateQuantity(it.toInt(), position)
                     }
                 }
                 if (idList.last() != item.container_id) {
                     itemDao.update(item.copy(floor_id = idList[0], room_id = idList[1], surface_id = idList[2], container_id = idList[3]))
-                    //~~~~~~~~~~adapter.delete(position)
+                    delete(position)
                 }
                 popup.dismiss()
             } else {
@@ -68,7 +87,7 @@ object InvUtils {
                 deletePopup.dismiss()
             }
             deleteBinding.yes.setOnClickListener {
-                //~~~~~~~~~daoList[daoIndex].delete(adapter.delete(position))
+                itemDao.delete(delete(position))
                 deletePopup.dismiss()
                 popup.dismiss()
             }
@@ -82,6 +101,7 @@ object InvUtils {
                     cameraPopup.dismiss()
                     itemDao.update(item.copy(image = it))
                     itemBinding.image.setImageURI(Uri.parse(it))
+                    updateImage(it, position)
                 }
             }
         }
@@ -108,7 +128,6 @@ object InvUtils {
 
     //https://developer.android.com/codelabs/camerax-getting-started
     private fun takePhoto(context: Context, savePhoto: (uri: String) -> Unit) {
-        Log.d("XXX", "takePhoto() called")
         // Get a stable reference of the modifiable image capture use case
         val imageCapture = imageCapture ?: return
         // Create time stamped name and MediaStore entry.
@@ -124,7 +143,6 @@ object InvUtils {
             .Builder(context.contentResolver, MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
             .build()
 
-        Log.d("XXX", "actually gonna take the picture")
         // Set up image capture listener, which is triggered after photo has been taken
         imageCapture.takePicture(outputOptions, ContextCompat.getMainExecutor(context),
             object : ImageCapture.OnImageSavedCallback {
@@ -165,25 +183,27 @@ object InvUtils {
 
     private fun setupSpinners(binding: ItemBinding, idList: MutableList<Int>, context: Context) {
         val spinnerList = listOf(binding.floorSpin, binding.roomSpin, binding.surfaceSpin, binding.containerSpin)
-        listOnSpinner(daoList[0].getAll(), 0, spinnerList, idList, context)
+        listOnSpinner(daoList[0].getAll(), 0, spinnerList, idList, context, true)
     }
 
-    private fun listOnSpinner(list: List<RoomDB.InvObject>, index: Int, spinnerList: List<Spinner>,
-                              idList: MutableList<Int>, context: Context) {
+    fun listOnSpinner(list: List<RoomDB.InvObject>, index: Int, spinnerList: List<Spinner>,
+                              idList: MutableList<Int>, context: Context, isItem: Boolean) {
         val spinner = spinnerList[index]
         //Floor represents not selected
         val adapter = ArrayAdapter(context, android.R.layout.simple_spinner_item,
             listOf<RoomDB.InvObject>(RoomDB.Floor(-1, "Select")) + list)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinner.adapter = adapter
-        if(idList[index] != -1) {
+        if(isItem && idList[index] != -1) {
             spinner.setSelection(list.indexOf(daoList[index].getById(idList[index])) + 1)
         }
         spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
                 for(i in index + 1 until idList.size) {
                     spinnerList[i].adapter = null
-                    //idList[i] = -1
+                    if(!isItem) {
+                        idList[i] = -1
+                    }
                 }
                 if(p2 == 0) {
                     idList[index] = -1
@@ -191,7 +211,7 @@ object InvUtils {
                     idList[index] = list[p2 - 1].id
                     if(index < daoList.size - 2) {
                         listOnSpinner(daoList[index].downList(idList[index]), index + 1,
-                            spinnerList, idList, context)
+                            spinnerList, idList, context, isItem)
                     }
                 }
             }
@@ -205,18 +225,5 @@ object InvUtils {
         mustBinding.okay.setOnClickListener {
             popup.dismiss()
         }
-    }
-
-    fun makePopup(popupBinding: ConstraintLayout): PopupWindow {
-        val popup = PopupWindow(popupBinding, screenWidth, screenHeight, true)
-        popup.showAtLocation(popupBinding.rootView, Gravity.TOP, 0, 0)
-        return popup
-    }
-
-    fun setup(height: Int, width: Int, list: List<RoomDB.InvDao>) {
-        screenHeight = height
-        screenWidth = width
-        daoList = list
-        itemDao = list.last() as RoomDB.ItemDao
     }
 }

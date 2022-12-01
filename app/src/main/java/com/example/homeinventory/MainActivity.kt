@@ -35,7 +35,7 @@ class MainActivity : AppCompatActivity() {
         val db = Room.databaseBuilder(this, RoomDB.Inventory::class.java, "inventory")
             .allowMainThreadQueries().fallbackToDestructiveMigration().build()
         val daoList = listOf(db.floorDao(), db.roomDao(), db.surfaceDao(), db.containerDao(), db.itemDao())
-        InvUtils.setup(metrics.bounds.height() - (insets.bottom + insets.top), binding.root.measuredWidth, daoList)
+        InvUtils.setup(metrics.bounds.height() - (insets.bottom + insets.top), metrics.bounds.width(), daoList)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {

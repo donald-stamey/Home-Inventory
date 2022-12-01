@@ -55,6 +55,11 @@ class InvListAdapter(private val invClick: (invObject: RoomDB.InvObject, positio
         notifyItemChanged(position)
     }
 
+    fun updateImage(newImage: String, position: Int) {
+        list[position] = (list[position] as RoomDB.Item).copy(image = newImage)
+        notifyItemChanged(position)
+    }
+
     override fun getItemCount(): Int {
         return list.size
     }
