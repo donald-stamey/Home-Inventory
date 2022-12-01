@@ -1,9 +1,8 @@
 package com.example.homeinventory
 
-import android.net.Uri
 import androidx.room.*
 
-class RoomDB {
+class Inventory {
     interface InvObject{
         val id: Int
         val name: String
@@ -233,7 +232,7 @@ class RoomDB {
     }
 
     @Database(entities = [Floor::class, Room::class, Surface::class, Container::class, Item::class], version = 4)
-    abstract class Inventory : RoomDatabase() {
+    abstract class InventoryDatabase : RoomDatabase() {
         abstract fun floorDao(): FloorDao
         abstract fun roomDao(): RoomDao
         abstract fun surfaceDao(): SurfaceDao

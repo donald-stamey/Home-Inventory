@@ -5,9 +5,9 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.homeinventory.databinding.InvRowBinding
 
-class InvListAdapter(private val invClick: (invObject: RoomDB.InvObject, position: Int) -> Unit) :
+class InvListAdapter(private val invClick: (invObject: Inventory.InvObject, position: Int) -> Unit) :
     RecyclerView.Adapter<InvListAdapter.ViewHolder>() {
-    private var list = mutableListOf<RoomDB.InvObject>()
+    private var list = mutableListOf<Inventory.InvObject>()
     inner class ViewHolder(val rowBinding: InvRowBinding) : RecyclerView.ViewHolder(rowBinding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -24,12 +24,12 @@ class InvListAdapter(private val invClick: (invObject: RoomDB.InvObject, positio
         }
     }
 
-    fun submitList(newList: List<RoomDB.InvObject>) {
+    fun submitList(newList: List<Inventory.InvObject>) {
         list = newList.toMutableList()
         notifyDataSetChanged()
     }
 
-    fun delete(index: Int): RoomDB.InvObject {
+    fun delete(index: Int): Inventory.InvObject {
         val removedObject = list.removeAt(index)
         notifyItemRemoved(index)
         notifyItemRangeChanged(index, itemCount)
@@ -40,23 +40,23 @@ class InvListAdapter(private val invClick: (invObject: RoomDB.InvObject, positio
         notifyItemChanged(index)
     }
 
-    fun add(invObject: RoomDB.InvObject) {
+    fun add(invObject: Inventory.InvObject) {
         list.add(invObject)
         notifyItemInserted(itemCount)
     }
 
     fun updateName(newName: String, position: Int) {
-        list[position] = (list[position] as RoomDB.Item).copy(name = newName)
+        list[position] = (list[position] as Inventory.Item).copy(name = newName)
         notifyItemChanged(position)
     }
 
     fun updateQuantity(newQuantity: Int, position: Int) {
-        list[position] = (list[position] as RoomDB.Item).copy(quantity = newQuantity)
+        list[position] = (list[position] as Inventory.Item).copy(quantity = newQuantity)
         notifyItemChanged(position)
     }
 
     fun updateImage(newImage: String, position: Int) {
-        list[position] = (list[position] as RoomDB.Item).copy(image = newImage)
+        list[position] = (list[position] as Inventory.Item).copy(image = newImage)
         notifyItemChanged(position)
     }
 

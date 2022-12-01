@@ -12,7 +12,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.ListAdapter
 import android.widget.PopupWindow
 import android.widget.Spinner
 import androidx.camera.core.CameraSelector
@@ -23,9 +22,6 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
-import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.homeinventory.databinding.CameraBinding
 import com.example.homeinventory.databinding.DeleteConfirmBinding
 import com.example.homeinventory.databinding.ItemBinding
@@ -37,14 +33,14 @@ object InvUtils {
     private var imageCapture: ImageCapture? = null
     private var screenHeight = 0
     private var screenWidth = 0
-    lateinit var daoList: List<RoomDB.InvDao>
-    lateinit var itemDao: RoomDB.ItemDao
+    lateinit var daoList: List<Inventory.InvDao>
+    lateinit var itemDao: Inventory.ItemDao
 
-    fun setup(height: Int, width: Int, list: List<RoomDB.InvDao>) {
+    fun setup(height: Int, width: Int, list: List<Inventory.InvDao>) {
         screenHeight = height
         screenWidth = width
         daoList = list
-        itemDao = list.last() as RoomDB.ItemDao
+        itemDao = list.last() as Inventory.ItemDao
     }
 
     fun makePopup(popupBinding: ConstraintLayout): PopupWindow {
@@ -53,12 +49,12 @@ object InvUtils {
         return popup
     }
 
-    fun itemPopup(item: RoomDB.Item, position: Int, layoutInflater: LayoutInflater,
+    fun itemPopup(item: Inventory.Item, position: Int, layoutInflater: LayoutInflater,
                   context: Context, lifecycleOwner: LifecycleOwner,
                   updateName: (name: String, position: Int) -> Unit,
                   updateQuantity: (quantity: Int, position: Int) -> Unit,
                   updateImage: (image: String, position: Int) -> Unit,
-                  delete: (position: Int) -> RoomDB.Item) {
+                  delete: (position: Int) -> Inventory.Item) {
         val itemBinding = ItemBinding.inflate(layoutInflater)
         val popup = makePopup(itemBinding.root)
         val idList = mutableListOf(item.floor_id, item.room_id, item.surface_id, item.container_id)
@@ -186,12 +182,12 @@ object InvUtils {
         listOnSpinner(daoList[0].getAll(), 0, spinnerList, idList, context, true)
     }
 
-    fun listOnSpinner(list: List<RoomDB.InvObject>, index: Int, spinnerList: List<Spinner>,
-                              idList: MutableList<Int>, context: Context, isItem: Boolean) {
+    fun listOnSpinner(list: List<Inventory.InvObject>, index: Int, spinnerList: List<Spinner>,
+                      idList: MutableList<Int>, context: Context, isItem: Boolean) {
         val spinner = spinnerList[index]
         //Floor represents not selected
         val adapter = ArrayAdapter(context, android.R.layout.simple_spinner_item,
-            listOf<RoomDB.InvObject>(RoomDB.Floor(-1, "Select")) + list)
+            listOf<Inventory.InvObject>(Inventory.Floor(-1, "Select")) + list)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinner.adapter = adapter
         if(isItem && idList[index] != -1) {

@@ -32,7 +32,7 @@ class MainActivity : AppCompatActivity() {
         }
         val metrics = this.windowManager.currentWindowMetrics
         val insets = metrics.windowInsets.getInsets(WindowInsets.Type.navigationBars() or WindowInsets.Type.displayCutout())
-        val db = Room.databaseBuilder(this, RoomDB.Inventory::class.java, "inventory")
+        val db = Room.databaseBuilder(this, Inventory.InventoryDatabase::class.java, "inventory")
             .allowMainThreadQueries().fallbackToDestructiveMigration().build()
         val daoList = listOf(db.floorDao(), db.roomDao(), db.surfaceDao(), db.containerDao(), db.itemDao())
         InvUtils.setup(metrics.bounds.height() - (insets.bottom + insets.top), metrics.bounds.width(), daoList)

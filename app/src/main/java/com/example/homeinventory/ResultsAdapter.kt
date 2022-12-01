@@ -1,16 +1,15 @@
 package com.example.homeinventory
 
 import android.net.Uri
-import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.homeinventory.databinding.ResultsRowBinding
 
-class ResultsAdapter(private val itemDao: RoomDB.ItemDao,
-                     private val resultsClick: (item: RoomDB.Item, position: Int) -> Unit) :
+class ResultsAdapter(private val itemDao: Inventory.ItemDao,
+                     private val resultsClick: (item: Inventory.Item, position: Int) -> Unit) :
     RecyclerView.Adapter<ResultsAdapter.ViewHolder>() {
-    private var list = mutableListOf<RoomDB.Item>()
+    private var list = mutableListOf<Inventory.Item>()
     inner class ViewHolder(val rowBinding: ResultsRowBinding) : RecyclerView.ViewHolder(rowBinding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -34,12 +33,12 @@ class ResultsAdapter(private val itemDao: RoomDB.ItemDao,
         }
     }
 
-    fun submitList(newList: List<RoomDB.Item>) {
+    fun submitList(newList: List<Inventory.Item>) {
         list = newList.toMutableList()
         notifyDataSetChanged()
     }
 
-    fun delete(index: Int): RoomDB.Item {
+    fun delete(index: Int): Inventory.Item {
         val removedObject = list.removeAt(index)
         notifyItemRemoved(index)
         notifyItemRangeChanged(index, itemCount)
