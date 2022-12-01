@@ -35,8 +35,8 @@ import java.util.*
 object InvUtils {
     private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
     private var imageCapture: ImageCapture? = null
-     var screenHeight = 0
-     var screenWidth = 0
+    private var screenHeight = 0
+    private var screenWidth = 0
     lateinit var daoList: List<RoomDB.InvDao>
     lateinit var itemDao: RoomDB.ItemDao
 

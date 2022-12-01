@@ -80,12 +80,10 @@ class DashboardFragment : Fragment() {
         setup()
         binding.back.setOnClickListener {
             up()
-            labelBinding.isEnabled = false
-            binding.edit.background = getDrawable(requireContext(), R.drawable.ic_edit_black_24dp)
         }
         binding.edit.setOnClickListener {
             if(labelBinding.isEnabled) {
-                labelBinding.isEnabled = false
+                disableEdit()
                 labelBinding.text.toString().let{newName -> curInvObject = when (daoIndex) {
                     1 -> (curInvObject as RoomDB.Floor).copy(name = newName)
                     2 -> (curInvObject as RoomDB.Room).copy(name = newName)
@@ -93,7 +91,6 @@ class DashboardFragment : Fragment() {
                     else -> (curInvObject as RoomDB.Container).copy(name = newName)
                 }}
                 daoList[daoIndex - 1].update(curInvObject)
-                it.background = getDrawable(requireContext(), R.drawable.ic_edit_black_24dp)
             } else {
                 labelBinding.isEnabled = true
                 it.background = getDrawable(requireContext(), R.drawable.ic_check_black_24dp)
@@ -179,7 +176,13 @@ class DashboardFragment : Fragment() {
         daoList[index].delete(invObject)
     }
 
+    private fun disableEdit() {
+        labelBinding.isEnabled = false
+        binding.edit.background = getDrawable(requireContext(), R.drawable.ic_edit_black_24dp)
+    }
+
     private fun down(invObject: RoomDB.InvObject, position: Int) {
+        disableEdit()
         if(daoIndex < daoList.size - 1) {
             binding.back.visibility = View.VISIBLE
             binding.edit.visibility = View.VISIBLE
@@ -204,6 +207,7 @@ class DashboardFragment : Fragment() {
             curInvObject = daoList[daoIndex].up(curInvObject)
             labelBinding.setText(curInvObject.name)
             adapter.submitList(daoList[daoIndex - 1].downList(curInvObject.id))
+            disableEdit()
         } else {
             daoIndex = 0
             adapter.submitList(daoList[daoIndex].getAll())
